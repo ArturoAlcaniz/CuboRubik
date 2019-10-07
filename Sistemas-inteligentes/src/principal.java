@@ -10,7 +10,23 @@ public class principal {
 		System.out.println("Cubo Inicial");
 		System.out.println(cubo);
 		
-		List<String[][]> cubomatriz = new ArrayList<String[][]>();  //El cubo con las 6caras en matrices
+		ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();  //El cubo con las 6caras en matrices
+		
+		System.out.println("Cubo tras B0:");
+		
+		inicializarcubomatriz(cubomatriz, cubo);
+		GirarBack(cubomatriz, 0);
+		cubo = convertircubomatriz(cubomatriz);
+		
+		System.out.println(cubo);
+		
+		System.out.println("Cubo tras B0 y b0:");
+		
+		inicializarcubomatriz(cubomatriz, cubo);
+		GirarBack2(cubomatriz, 0);
+		cubo = convertircubomatriz(cubomatriz);
+		
+		System.out.println(cubo);
 		
 	}
 	
