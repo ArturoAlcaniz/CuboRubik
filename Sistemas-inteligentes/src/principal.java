@@ -38,6 +38,29 @@ public class principal {
 		}
 	}
 	
+	public static String convertircubomatriz(ArrayList<String[][]> cubomatriz) {
+		
+		String cubo = "";
+		
+		for(int ca = 0; ca<6; ca++) {
+			
+			String[][] cara = cubomatriz.get(ca);
+			
+			for(int i=0; i<cara.length; i++) {
+				
+				for(int j=0; j<cara[i].length; j++) {
+					
+					cubo = cubo+cara[i][j];
+					
+				}
+			}
+			
+		}
+		
+		return cubo;
+		
+	}
+
 	public static void GirarBack(ArrayList<String[][]> cubo, int movimiento) {
 		
 		String[][] caraback = cubo.get(0);
