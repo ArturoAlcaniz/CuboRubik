@@ -1,11 +1,31 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.xml.sax.SAXException;
+
+import jdk.nashorn.internal.runtime.regexp.RegExp;
+
 public class principal {
 
-	public static void main(String[] args) {
-
-		String cubo = "444333333111244111222222555244000244553111553000553000";
+	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException {
+		
+		Object datosCubo[] = leerjson(3);
+		
+		
+		String cubo = (String) datosCubo[0];
 		
 		System.out.println("Cubo Inicial");
 		System.out.println(cubo);
@@ -475,5 +495,28 @@ public class principal {
 		}
 		
 	}
-
+	public static Object[] leerjson(int n) throws FileNotFoundException, IOException, ParseException{
+		File f = new File(".");
+		String str = "";
+		String[] lados = {"BACK","DOWN","FRONT","LEFT","RIGHT","UP"};
+		Object[] devuelve = new Object[2];
+		JSONParser parser = new JSONParser();
+		Object obj = parser.parse(new FileReader(f.getCanonicalPath()+"/Cubos/cube.json"));
+		JSONObject jsonObject = (JSONObject) obj;
+		for(int i=0;i<6;i++) {
+			JSONArray contenido = (JSONArray) jsonObject.get(lados[i]);
+			for(Object a : contenido) {
+				String[] ad=a.toString().split(",|\\[|\\]");
+				for(int j=1;j<n+1;j++) 
+				str = str + ad[n].toString();
+			
+			}
+		}
+		//Encripta la cedana en string MD5
+		String md5 = DigestUtils.md5Hex(str);
+		devuelve[0] = str;
+		devuelve[1] = md5; 
+		return devuelve;
+		
+	}
 }

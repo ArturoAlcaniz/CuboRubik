@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="Sistemas-inteligentes/src"/>
+	<classpathentry kind="lib" path="Librerias/json-simple-1.1.1.jar"/>
+	<classpathentry kind="lib" path="Librerias/commons-codec-1.12.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
