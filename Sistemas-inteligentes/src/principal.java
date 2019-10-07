@@ -56,14 +56,14 @@ public class principal {
 			
 			for(int i=0; i<N-1; i++) {
 				
-				Aux1 = caraback[i][N];
-				caraback[i][N] = caraback[0][i];
+				Aux1 = caraback[i][N-1];
+				caraback[i][N-1] = caraback[0][i];
 				
-				Aux2 = caraback[N][N-i];
-				caraback[N][N-i] = Aux1;
+				Aux2 = caraback[N-1][N-1-i];
+				caraback[N-1][N-1-i] = Aux1;
 				
-				Aux1 = caraback[N-i][0];
-				caraback[N-i][0] = Aux2;
+				Aux1 = caraback[N-1-i][0];
+				caraback[N-1-i][0] = Aux2;
 				
 				caraback[0][i] = Aux1;				
 			}
@@ -72,14 +72,14 @@ public class principal {
 			
 			for(int i=0; i<N-1; i++) {
 				
-				Aux1 = carafront[i][N];
-				carafront[i][N] = carafront[0][i];
+				Aux1 = carafront[i][N-1];
+				carafront[i][N-1] = carafront[0][i];
 				
-				Aux2 = carafront[N][N-i];
-				carafront[N][N-i] = Aux1;
+				Aux2 = carafront[N-1][N-1-i];
+				carafront[N-1][N-1-i] = Aux1;
 				
 				Aux1 = carafront[N-i][0];
-				carafront[N-i][0] = Aux2;
+				carafront[N-1-i][0] = Aux2;
 				
 				carafront[0][i] = Aux1;				
 			}
@@ -123,15 +123,15 @@ public class principal {
 			for(int i=0; i<N-1; i++) {
 				
 				Aux1 = caraback[0][i];
-				caraback[0][i] = caraback[i][N];
+				caraback[0][i] = caraback[i][N-1];
 				
-				Aux2 = caraback[N-i][0];
-				caraback[N-i][0] = Aux1;
+				Aux2 = caraback[N-1-i][0];
+				caraback[N-1-i][0] = Aux1;
 				
-				Aux1 = caraback[N][N-1];
-				caraback[N][N-1] = Aux2;
+				Aux1 = caraback[N-1][N-1-i];
+				caraback[N-1][N-1-i] = Aux2;
 				
-				caraback[i][N] = Aux1;
+				caraback[i][N-1] = Aux1;
 							
 			}
 			
@@ -140,15 +140,15 @@ public class principal {
 			for(int i=0; i<N-1; i++) {
 				
 				Aux1 = carafront[0][i];
-				carafront[0][i] = carafront[i][N];
+				carafront[0][i] = carafront[i][N-1];
 				
-				Aux2 = carafront[N-i][0];
-				carafront[N-i][0] = Aux1;
+				Aux2 = carafront[N-1-i][0];
+				carafront[N-1-i][0] = Aux1;
 				
-				Aux1 = carafront[N][N-i];
-				carafront[N][N-i] = Aux2;
+				Aux1 = carafront[N-1][N-1-i];
+				carafront[N-1][N-1-i] = Aux2;
 				
-				carafront[i][N] = Aux1;
+				carafront[i][N-1] = Aux1;
 				
 			}
 			
