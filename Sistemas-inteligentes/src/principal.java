@@ -64,6 +64,8 @@ public class principal {
 		
 		while(comprobar == true && ca<6) {
 			
+			i = 0;
+			
 			String[][] cara = cubo.get(ca);
 			String color = cara[0][0];
 			
