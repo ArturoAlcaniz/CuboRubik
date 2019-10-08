@@ -2,9 +2,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -15,15 +12,16 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.xml.sax.SAXException;
+import java.util.ArrayList;
 
-import jdk.nashorn.internal.runtime.regexp.RegExp;
 
 public class principal {
 
 	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException {
 		
-		Object datosCubo[] = leerjson(3);
+		long startTime = System.currentTimeMillis();
 		
+		Object datosCubo[] = leerjson(3);
 		
 		String cubo = (String) datosCubo[0];
 		
@@ -32,7 +30,7 @@ public class principal {
 		
 		ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();  //El cubo con las 6caras en matrices
 		
-		System.out.println("Cubo tras B0:");
+		System.out.println("\nCubo tras B0:");
 		
 		inicializarcubomatriz(cubomatriz, cubo);
 		GirarBack(cubomatriz, 0);
@@ -40,13 +38,51 @@ public class principal {
 		
 		System.out.println(cubo);
 		
-		System.out.println("Cubo tras B0 y b0:");
+		System.out.println("\nCubo tras B0 y b0:");
 		
 		inicializarcubomatriz(cubomatriz, cubo);
 		GirarBack2(cubomatriz, 0);
 		cubo = convertircubomatriz(cubomatriz);
 		
 		System.out.println(cubo);
+		
+		inicializarcubomatriz(cubomatriz, cubo);
+		System.out.println("\nEs Objetivo: "+EsObjetivo(cubomatriz));
+		
+		long endTime = System.currentTimeMillis();
+		
+		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
+		
+	}
+	
+	public static boolean EsObjetivo(ArrayList<String[][]> cubo) {
+		
+		boolean comprobar = true;
+		int ca = 0;
+		int i = 0;
+		int j = 0;
+		
+		while(comprobar == true && ca<6) {
+			
+			String[][] cara = cubo.get(ca);
+			String color = cara[0][0];
+			
+			while(comprobar == true && i<cara.length) {
+				
+				while(comprobar == true && j<cara[i].length) {
+				
+					if(Integer.parseInt(cara[i][j]) != Integer.parseInt(color)) {
+						comprobar = false;
+					}
+					
+					j++;
+				}
+				i++;
+			}
+			ca++;
+		}
+		
+		return comprobar;
 		
 	}
 	
