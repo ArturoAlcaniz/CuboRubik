@@ -69,6 +69,8 @@ public class principal {
 			
 			while(comprobar == true && i<cara.length) {
 				
+				j = 0;
+				
 				while(comprobar == true && j<cara[i].length) {
 				
 					if(Integer.parseInt(cara[i][j]) != Integer.parseInt(color)) {
