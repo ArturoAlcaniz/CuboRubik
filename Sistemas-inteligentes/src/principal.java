@@ -18,12 +18,11 @@ import java.util.Random;
 
 public class principal {
 
-	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException {
-		
+	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException{
 		long startTime = System.currentTimeMillis();
 		Random rd = new Random();
-		
 		Frontera f = new Frontera();
+		ArrayList<String> visitados = new ArrayList<String>();
 		
 		Object datosCubo[] = leerjson(3);
 		
@@ -31,70 +30,138 @@ public class principal {
 		
 		System.out.println("Cubo Inicial");
 		System.out.println(cubo);
+
 		
 		NodoArbol padre = new NodoArbol(cubo, rd.nextInt(100));
+		f.insertar(padre); // La frontera inicial es el cubo del que partimos
 		
-		GenerarFrontera(f, padre);
+		NodoArbol a = null;
 		
-		System.out.println(f.toString());
+		while (f.getNodos().size()>=1) {
+			
+			a = f.getNodos().get(0);
+			
+			if(EsObjetivo(a.getEstado())) {
+				break;
+			}else {
+				
+				if(calcularDepth(a)<10) {  //Control de profundidad
+					
+					visitados.add(a.getEstado());
+					f.eliminar();
+					GenerarFrontera(visitados, f, a);
+				
+				}else {
+					
+					f.eliminar();
+				
+				}
+			}
+		}
 		
 		long endTime = System.currentTimeMillis();
 		
-		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
+		System.out.println("Nodos Visitados: "+visitados.size());
 		
+		if(EsObjetivo(a.getEstado())) {
+			
+			System.out.println("Objetivo encontrado");
+			System.out.println(f.getNodos().get(0).getEstado());
+			
+		}else {
+			
+			System.out.println("Objetivo no encontrado");
+			
+		}
+		
+		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
+
+	}
+	public static int calcularDepth(NodoArbol a) {
+		int d = 0;
+		while(a.getPadre() != null) {
+			a = a.getPadre();
+			d++;
+		}
+		return d;
 	}
 	
-	public static void GenerarFrontera(Frontera f, NodoArbol padre) {
+	public static Frontera GenerarFrontera(ArrayList<String> visitados, Frontera f, NodoArbol padre) {
+		
 		Random rd = new Random();
 		String cubo = padre.getEstado();
 		ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
 		int N = (int) Math.sqrt(cubo.length()/6);
 		String estado;
 		String cubo2;
+		NodoArbol a;
 		
 		for(int i = 0; i<N-1; i++) {
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarBack(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
 			//falta md5 (ej: cubo2 = convertirMD5(cubo2))
-			NodoArbol a = new NodoArbol(padre, cubo2, "B"+i, rd.nextInt(100));
-			f.insertar(a);
+			if(!visitados.contains(cubo2)) {
+				a = new NodoArbol(padre, cubo2, "B"+i, rd.nextInt(100));
+				f.insertar(a);
+			}
+				
 			
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarBack2(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			a = new NodoArbol(padre, cubo2, "b"+i, rd.nextInt(100));
-			f.insertar(a);
+			if(!visitados.contains(cubo2)) {
+				a = new NodoArbol(padre, cubo2, "b"+i, rd.nextInt(100));
+				f.insertar(a);
+			}
+			
 			
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarDown(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			a = new NodoArbol(padre, cubo2, "D"+i, rd.nextInt(100));
-			f.insertar(a);
+			if(!visitados.contains(cubo2)) {
+				a = new NodoArbol(padre, cubo2, "D"+i, rd.nextInt(100));
+				f.insertar(a);
+			}
+			
 			
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarDown2(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			a = new NodoArbol(padre, cubo2, "d"+i, rd.nextInt(100));
-			f.insertar(a);
+			if(!visitados.contains(cubo2)) {
+				a = new NodoArbol(padre, cubo2, "d"+i, rd.nextInt(100));
+				f.insertar(a);
+			}
+			
 			
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarLeft(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			a = new NodoArbol(padre, cubo2, "L"+i, rd.nextInt(100));
-			f.insertar(a);
+			if(!visitados.contains(cubo2)) {
+				a = new NodoArbol(padre, cubo2, "L"+i, rd.nextInt(100));
+				f.insertar(a);
+			}
+			
 			
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarLeft2(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			a = new NodoArbol(padre, cubo2, "l"+i, rd.nextInt(100));
-			f.insertar(a);
+			if(!visitados.contains(cubo2)) {
+				a = new NodoArbol(padre, cubo2, "l"+i, rd.nextInt(100));
+				f.insertar(a);
+			}
+			
 				
 		}
 		
+		return f;
+		
 	}
 	
-	public static boolean EsObjetivo(ArrayList<String[][]> cubo) {
+	public static boolean EsObjetivo(String estado) {
+		
+		ArrayList<String[][]> cubo = new ArrayList<String[][]>();
+		inicializarcubomatriz(cubo, estado);
 		
 		boolean comprobar = true;
 		int ca = 0;
@@ -106,16 +173,18 @@ public class principal {
 			i = 0;
 			
 			String[][] cara = cubo.get(ca);
+			
 			String color = cara[0][0];
 			
 			while(comprobar == true && i<cara.length) {
 				
-				j = 0;
+				j=0;
 				
 				while(comprobar == true && j<cara[i].length) {
-				
+			
 					if(Integer.parseInt(cara[i][j]) != Integer.parseInt(color)) {
 						comprobar = false;
+						
 					}
 					
 					j++;
@@ -126,6 +195,29 @@ public class principal {
 		}
 		
 		return comprobar;
+		
+	}
+	
+	public static String convertircubomatriz(ArrayList<String[][]> cubomatriz) {
+		
+		String cubo = "";
+		
+		for(int ca = 0; ca<6; ca++) {
+			
+			String[][] cara = cubomatriz.get(ca);
+			
+			for(int i=0; i<cara.length; i++) {
+				
+				for(int j=0; j<cara[i].length; j++) {
+					
+					cubo = cubo+cara[i][j];
+					
+				}
+			}
+			
+		}
+		
+		return cubo;
 		
 	}
 	
@@ -153,29 +245,6 @@ public class principal {
 		}
 	}
 	
-	public static String convertircubomatriz(ArrayList<String[][]> cubomatriz) {
-		
-		String cubo = "";
-		
-		for(int ca = 0; ca<6; ca++) {
-			
-			String[][] cara = cubomatriz.get(ca);
-			
-			for(int i=0; i<cara.length; i++) {
-				
-				for(int j=0; j<cara[i].length; j++) {
-					
-					cubo = cubo+cara[i][j];
-					
-				}
-			}
-			
-		}
-		
-		return cubo;
-		
-	}
-
 	public static void GirarBack(ArrayList<String[][]> cubo, int movimiento) {
 		
 		String[][] caraback = cubo.get(0);
@@ -574,6 +643,7 @@ public class principal {
 		}
 		
 	}
+	
 	public static Object[] leerjson(int n) throws FileNotFoundException, IOException, ParseException{
 		File f = new File(".");
 		String str = "";
