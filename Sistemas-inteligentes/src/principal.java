@@ -47,7 +47,8 @@ public class principal {
 				
 				if(calcularDepth(a)<10) {  //Control de profundidad
 					
-					visitados.add(a.getEstado());
+					String md5 = DigestUtils.md5Hex(a.getEstado());
+					visitados.add(md5);
 					f.eliminar();
 					GenerarFrontera(visitados, f, a);
 				
@@ -86,22 +87,22 @@ public class principal {
 		return d;
 	}
 	
-	public static Frontera GenerarFrontera(ArrayList<String> visitados, Frontera f, NodoArbol padre) {
+	public static void GenerarFrontera(ArrayList<String> visitados, Frontera f, NodoArbol padre) {
 		
 		Random rd = new Random();
 		String cubo = padre.getEstado();
 		ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
 		int N = (int) Math.sqrt(cubo.length()/6);
-		String estado;
 		String cubo2;
+		String md5;
 		NodoArbol a;
 		
 		for(int i = 0; i<N-1; i++) {
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarBack(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			//falta md5 (ej: cubo2 = convertirMD5(cubo2))
-			if(!visitados.contains(cubo2)) {
+			md5 = DigestUtils.md5Hex(cubo2);
+			if(!visitados.contains(md5)) {
 				a = new NodoArbol(padre, cubo2, "B"+i, rd.nextInt(100));
 				f.insertar(a);
 			}
@@ -110,7 +111,8 @@ public class principal {
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarBack2(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			if(!visitados.contains(cubo2)) {
+			md5 = DigestUtils.md5Hex(cubo2);
+			if(!visitados.contains(md5)) {
 				a = new NodoArbol(padre, cubo2, "b"+i, rd.nextInt(100));
 				f.insertar(a);
 			}
@@ -119,7 +121,8 @@ public class principal {
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarDown(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			if(!visitados.contains(cubo2)) {
+			md5 = DigestUtils.md5Hex(cubo2);
+			if(!visitados.contains(md5)) {
 				a = new NodoArbol(padre, cubo2, "D"+i, rd.nextInt(100));
 				f.insertar(a);
 			}
@@ -128,7 +131,8 @@ public class principal {
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarDown2(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			if(!visitados.contains(cubo2)) {
+			md5 = DigestUtils.md5Hex(cubo2);
+			if(!visitados.contains(md5)) {
 				a = new NodoArbol(padre, cubo2, "d"+i, rd.nextInt(100));
 				f.insertar(a);
 			}
@@ -137,7 +141,8 @@ public class principal {
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarLeft(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			if(!visitados.contains(cubo2)) {
+			md5 = DigestUtils.md5Hex(cubo2);
+			if(!visitados.contains(md5)) {
 				a = new NodoArbol(padre, cubo2, "L"+i, rd.nextInt(100));
 				f.insertar(a);
 			}
@@ -146,15 +151,14 @@ public class principal {
 			inicializarcubomatriz(cubomatriz, cubo);
 			GirarLeft2(cubomatriz, i);
 			cubo2 = convertircubomatriz(cubomatriz);
-			if(!visitados.contains(cubo2)) {
+			md5 = DigestUtils.md5Hex(cubo2);
+			if(!visitados.contains(md5)) {
 				a = new NodoArbol(padre, cubo2, "l"+i, rd.nextInt(100));
 				f.insertar(a);
 			}
 			
 				
 		}
-		
-		return f;
 		
 	}
 	
