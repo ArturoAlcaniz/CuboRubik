@@ -13,6 +13,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.xml.sax.SAXException;
 import java.util.ArrayList;
+import java.util.Random;
 
 
 public class principal {
@@ -20,6 +21,9 @@ public class principal {
 	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException {
 		
 		long startTime = System.currentTimeMillis();
+		Random rd = new Random();
+		
+		Frontera f = new Frontera();
 		
 		Object datosCubo[] = leerjson(3);
 		
@@ -28,30 +32,65 @@ public class principal {
 		System.out.println("Cubo Inicial");
 		System.out.println(cubo);
 		
-		ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();  //El cubo con las 6caras en matrices
+		NodoArbol padre = new NodoArbol(cubo, rd.nextInt(100));
 		
-		System.out.println("\nCubo tras B0:");
+		GenerarFrontera(f, padre);
 		
-		inicializarcubomatriz(cubomatriz, cubo);
-		GirarBack(cubomatriz, 0);
-		cubo = convertircubomatriz(cubomatriz);
-		
-		System.out.println(cubo);
-		
-		System.out.println("\nCubo tras B0 y b0:");
-		
-		inicializarcubomatriz(cubomatriz, cubo);
-		GirarBack2(cubomatriz, 0);
-		cubo = convertircubomatriz(cubomatriz);
-		
-		System.out.println(cubo);
-		
-		inicializarcubomatriz(cubomatriz, cubo);
-		System.out.println("\nEs Objetivo: "+EsObjetivo(cubomatriz));
+		System.out.println(f.toString());
 		
 		long endTime = System.currentTimeMillis();
 		
 		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
+		
+	}
+	
+	public static void GenerarFrontera(Frontera f, NodoArbol padre) {
+		Random rd = new Random();
+		String cubo = padre.getEstado();
+		ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
+		int N = (int) Math.sqrt(cubo.length()/6);
+		String estado;
+		String cubo2;
+		
+		for(int i = 0; i<N-1; i++) {
+			inicializarcubomatriz(cubomatriz, cubo);
+			GirarBack(cubomatriz, i);
+			cubo2 = convertircubomatriz(cubomatriz);
+			//falta md5 (ej: cubo2 = convertirMD5(cubo2))
+			NodoArbol a = new NodoArbol(padre, cubo2, "B"+i, rd.nextInt(100));
+			f.insertar(a);
+			
+			inicializarcubomatriz(cubomatriz, cubo);
+			GirarBack2(cubomatriz, i);
+			cubo2 = convertircubomatriz(cubomatriz);
+			a = new NodoArbol(padre, cubo2, "b"+i, rd.nextInt(100));
+			f.insertar(a);
+			
+			inicializarcubomatriz(cubomatriz, cubo);
+			GirarDown(cubomatriz, i);
+			cubo2 = convertircubomatriz(cubomatriz);
+			a = new NodoArbol(padre, cubo2, "D"+i, rd.nextInt(100));
+			f.insertar(a);
+			
+			inicializarcubomatriz(cubomatriz, cubo);
+			GirarDown2(cubomatriz, i);
+			cubo2 = convertircubomatriz(cubomatriz);
+			a = new NodoArbol(padre, cubo2, "d"+i, rd.nextInt(100));
+			f.insertar(a);
+			
+			inicializarcubomatriz(cubomatriz, cubo);
+			GirarLeft(cubomatriz, i);
+			cubo2 = convertircubomatriz(cubomatriz);
+			a = new NodoArbol(padre, cubo2, "L"+i, rd.nextInt(100));
+			f.insertar(a);
+			
+			inicializarcubomatriz(cubomatriz, cubo);
+			GirarLeft2(cubomatriz, i);
+			cubo2 = convertircubomatriz(cubomatriz);
+			a = new NodoArbol(padre, cubo2, "l"+i, rd.nextInt(100));
+			f.insertar(a);
+				
+		}
 		
 	}
 	
