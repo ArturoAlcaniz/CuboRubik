@@ -57,7 +57,7 @@ public class principal {
 					break;
 				}else {
 					
-					if(calcularDepth(a)<10) {  //Control de profundidad
+					if(calcularDepth(a)<limiteProfundidad) {  //Control de profundidad
 						
 						String md5 = DigestUtils.md5Hex(a.getEstado());
 						visitados.add(md5);
