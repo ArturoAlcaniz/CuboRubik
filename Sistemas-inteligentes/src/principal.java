@@ -20,59 +20,94 @@ public class principal {
 
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
-		Random rd = new Random();
-		Frontera f = new Frontera();
-		ArrayList<String> visitados = new ArrayList<String>();
-	
+		
 		comprobacionEjemplo();
 		
-		/*	
-		NodoArbol a = null;
-		NodoArbol padre = new NodoArbol(cubo, rd.nextInt(100));
-		f.insertar(padre); // La frontera inicial es el cubo del que partimos
-		
-		while (f.getNodos().size()>=1) {
-			
-			a = f.getNodos().get(0);
-			
-			if(EsObjetivo(a.getEstado())) {
-				break;
-			}else {
-				
-				if(calcularDepth(a)<10) {  //Control de profundidad
-					
-					String md5 = DigestUtils.md5Hex(a.getEstado());
-					visitados.add(md5);
-					f.eliminar();
-					GenerarFrontera(visitados, f, a);
-				
-				}else {
-					
-					f.eliminar();
-				
-				}
-			}
+		ArrayList<String> solucion = encontrarSolucion("/Cubos/cube.json", 5);
+		if(solucion != null) {
+			System.out.println("Solucion encontrada: ");
+			imprimirSolucion(solucion);	
+		}else {
+			System.out.println("Solucion no encontrada");
 		}
 		
-		
-		
-		System.out.println("Nodos Visitados: "+visitados.size());
-		
-		if(EsObjetivo(a.getEstado())) {
-			
-			System.out.println("Objetivo encontrado");
-			System.out.println(f.getNodos().get(0).getEstado());
-			
-		}else {
-			
-			System.out.println("Objetivo no encontrado");
-			
-		}*/
-	
 		long endTime = System.currentTimeMillis();
 		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
 
 	}
+	
+	public static ArrayList<String> encontrarSolucion(String file, int limiteProfundidad) {
+		Random rd = new Random();
+		ArrayList<String> solucion = new ArrayList<String>();
+		ArrayList<String> visitados = new ArrayList<String>();
+		NodoArbol a = null;
+		Frontera f = new Frontera();
+		Object datosCubo[];
+		try {
+			datosCubo = leerjson(file);
+			String cubo = (String) datosCubo[0];
+			NodoArbol padre = new NodoArbol(cubo, rd.nextInt(100));
+			f.insertar(padre); // La frontera inicial es el cubo del que partimos
+			
+			while (f.getNodos().size()>=1) {
+				
+				a = f.getNodos().get(0);
+				
+				if(EsObjetivo(a.getEstado())) {
+					break;
+				}else {
+					
+					if(calcularDepth(a)<10) {  //Control de profundidad
+						
+						String md5 = DigestUtils.md5Hex(a.getEstado());
+						visitados.add(md5);
+						f.eliminar();
+						GenerarFrontera(visitados, f, a);
+					
+					}else {
+						
+						f.eliminar();
+					
+					}
+				}
+			}
+			
+			
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		if(EsObjetivo(a.getEstado())) {
+		
+			while(a.getPadre() != null) {
+				
+				solucion.add(0, a.getAccion());
+				a = a.getPadre();
+		
+			}
+			
+			return solucion;
+		
+		}else {
+			
+			return null;
+		
+		}
+		
+	}
+	
+	public static void imprimirSolucion(ArrayList<String> solucion) {
+		Iterator<String> iter = solucion.iterator();
+		while(iter.hasNext()) {
+			System.out.print(iter.next()+" -> ");
+		}
+		
+	}
+	
 	public static void imprimirMD5(ArrayList<String[][]> cubomatriz) {
 		String cubo = convertircubomatriz(cubomatriz);
 		String md5 = DigestUtils.md5Hex(cubo);
@@ -83,7 +118,7 @@ public class principal {
 	public static void comprobacionEjemplo() {
 		
 		try {
-			Object datosCubo[] = leerjson("/Cubos/cube3.json",10);
+			Object datosCubo[] = leerjson("/Cubos/cube3.json");
 			String cubo = (String) datosCubo[0];
 			System.out.println("Cubo Inicial");
 			System.out.println(cubo);
@@ -770,7 +805,7 @@ public class principal {
 		}
 	}
 	
-	public static Object[] leerjson(String file, int n) throws FileNotFoundException, IOException, ParseException{
+	public static Object[] leerjson(String file) throws FileNotFoundException, IOException, ParseException{
 		File f = new File(".");
 		String str = "";
 		String[] lados = {"BACK","DOWN","FRONT","LEFT","RIGHT","UP"};
@@ -782,8 +817,8 @@ public class principal {
 			JSONArray contenido = (JSONArray) jsonObject.get(lados[i]);
 			for(Object a : contenido) {
 				String[] ad=a.toString().split(",|\\[|\\]");
-				for(int j=1;j<n+1;j++) 
-				str = str + ad[n].toString();
+				for(int j=0;j<contenido.size();j++) 
+				str = str + ad[contenido.size()].toString();
 			
 			}
 		}
