@@ -18,24 +18,18 @@ import java.util.Random;
 
 public class principal {
 
-	public static void main(String[] args) throws FileNotFoundException, IOException, ParseException{
+	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		Random rd = new Random();
 		Frontera f = new Frontera();
 		ArrayList<String> visitados = new ArrayList<String>();
+	
+		comprobacionEjemplo();
 		
-		Object datosCubo[] = leerjson(3);
-		
-		String cubo = (String) datosCubo[0];
-		
-		System.out.println("Cubo Inicial");
-		System.out.println(cubo);
-
-		
+		/*	
+		NodoArbol a = null;
 		NodoArbol padre = new NodoArbol(cubo, rd.nextInt(100));
 		f.insertar(padre); // La frontera inicial es el cubo del que partimos
-		
-		NodoArbol a = null;
 		
 		while (f.getNodos().size()>=1) {
 			
@@ -60,7 +54,7 @@ public class principal {
 			}
 		}
 		
-		long endTime = System.currentTimeMillis();
+		
 		
 		System.out.println("Nodos Visitados: "+visitados.size());
 		
@@ -73,11 +67,77 @@ public class principal {
 			
 			System.out.println("Objetivo no encontrado");
 			
-		}
-		
+		}*/
+	
+		long endTime = System.currentTimeMillis();
 		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
 
 	}
+	public static void imprimirMD5(ArrayList<String[][]> cubomatriz) {
+		String cubo = convertircubomatriz(cubomatriz);
+		String md5 = DigestUtils.md5Hex(cubo);
+		System.out.println(md5);
+	}
+	
+	
+	public static void comprobacionEjemplo() {
+		
+		try {
+			Object datosCubo[] = leerjson("/Cubos/cube3.json",10);
+			String cubo = (String) datosCubo[0];
+			System.out.println("Cubo Inicial");
+			System.out.println(cubo);
+			String md5 = DigestUtils.md5Hex(cubo);
+			System.out.println(md5);
+			
+			ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
+			inicializarcubomatriz(cubomatriz, cubo);
+			
+			System.out.println("Accion l3:");
+			GirarLeft2(cubomatriz, 3);
+			imprimirMD5(cubomatriz);
+			
+			System.out.println("Accion D1:");
+			GirarDown(cubomatriz, 1);
+			imprimirMD5(cubomatriz);
+			
+			System.out.println("Accion l1:");
+			GirarLeft2(cubomatriz, 1);
+			imprimirMD5(cubomatriz);
+			
+			System.out.println("Accion d0:");
+			GirarDown2(cubomatriz, 0);
+			imprimirMD5(cubomatriz);
+			
+			System.out.println("Accion B0:");
+			GirarBack(cubomatriz, 0);
+			imprimirMD5(cubomatriz);
+			
+			System.out.println("Accion b5:");
+			GirarBack2(cubomatriz, 5);
+			imprimirMD5(cubomatriz);
+			
+			System.out.println("Accion l2:");
+			GirarLeft2(cubomatriz, 2);
+			imprimirMD5(cubomatriz);
+			
+			System.out.println("Accion d1:");
+			GirarDown2(cubomatriz, 1);
+			imprimirMD5(cubomatriz);
+			
+			
+			
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	public static int calcularDepth(NodoArbol a) {
 		int d = 0;
 		while(a.getPadre() != null) {
@@ -262,37 +322,44 @@ public class principal {
 		
 		String Aux1 = ""; 
 		String Aux2 = "";
+		int cuadrados = calcularcuadrados(N);
 		
 		if(movimiento == 0) { // Se mueve Back
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
+			
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux1 = caraback[i][N-1];
-				caraback[i][N-1] = caraback[0][i];
+					Aux1 = caraback[i][N-1-j];
+					caraback[i][N-1-j] = caraback[j][i];
 				
-				Aux2 = caraback[N-1][N-1-i];
-				caraback[N-1][N-1-i] = Aux1;
+					Aux2 = caraback[N-1-j][N-1-i];
+					caraback[N-1-j][N-1-i] = Aux1;
 				
-				Aux1 = caraback[N-1-i][0];
-				caraback[N-1-i][0] = Aux2;
+					Aux1 = caraback[N-1-i][j];
+					caraback[N-1-i][j] = Aux2;
 				
-				caraback[0][i] = Aux1;				
+					caraback[j][i] = Aux1;				
+				}
 			}
 			
 		}else if(movimiento == N-1) { // Se mueve Front
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
+			
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux1 = carafront[i][N-1];
-				carafront[i][N-1] = carafront[0][i];
+					Aux1 = carafront[i][N-1-j];
+					carafront[i][N-1-j] = carafront[j][i];
 				
-				Aux2 = carafront[N-1][N-1-i];
-				carafront[N-1][N-1-i] = Aux1;
+					Aux2 = carafront[N-1-j][N-1-i];
+					carafront[N-1-j][N-1-i] = Aux1;
 				
-				Aux1 = carafront[N-i][0];
-				carafront[N-1-i][0] = Aux2;
+					Aux1 = carafront[N-i][j];
+					carafront[N-1-i][j] = Aux2;
 				
-				carafront[0][i] = Aux1;				
+					carafront[j][i] = Aux1;				
+				}
 			}
 			
 		}
@@ -314,8 +381,31 @@ public class principal {
 		
 	}
 	
+	public static void imprimirmatriz(String[][] cubo) {
+		for(int i=0; i<cubo.length;i++) {
+			for(int j=0; j<cubo[i].length; j++) {
+				System.out.print(cubo[i][j]+" ");
+			}
+			System.out.println();
+		}
+	}
+	
+	public static int calcularcuadrados(int N) {
+		int cuadrados = 0;
+		int aux = 4;
+		while(aux>3) {
+			int M = N*N;
+			int c = 3;
+			int t = N*c;
+			aux = M-t;
+			N=N-2;
+			cuadrados++;
+		}
+		return cuadrados;
+	}
 	
 	public static void GirarBack2(ArrayList<String[][]> cubo, int movimiento) {
+		
 		
 		String[][] caraback = cubo.get(0);
 		String[][] caradown = cubo.get(1);
@@ -323,44 +413,52 @@ public class principal {
 		String[][] caraleft = cubo.get(3);
 		String[][] cararight = cubo.get(4);
 		String[][] caraup = cubo.get(5);
+
 	
 		int N = caraback.length;
 		
 		String Aux1 = ""; 
 		String Aux2 = "";
+		int cuadrados = calcularcuadrados(N);
 		
 		if(movimiento == 0) { // Se mueve Back
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
 				
-				Aux1 = caraback[0][i];
-				caraback[0][i] = caraback[i][N-1];
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux2 = caraback[N-1-i][0];
-				caraback[N-1-i][0] = Aux1;
+					Aux1 = caraback[j][i];
+					caraback[j][i] = caraback[i][N-1-j];
 				
-				Aux1 = caraback[N-1][N-1-i];
-				caraback[N-1][N-1-i] = Aux2;
+					Aux2 = caraback[N-1-i][j];
+					caraback[N-1-i][j] = Aux1;
 				
-				caraback[i][N-1] = Aux1;
+					Aux1 = caraback[N-1-j][N-1-i];
+					caraback[N-1-j][N-1-i] = Aux2;
+				
+					caraback[i][N-1-j] = Aux1;
 							
+				}
 			}
 			
 		}else if(movimiento == N-1) { // Se mueve Front
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
+			
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux1 = carafront[0][i];
-				carafront[0][i] = carafront[i][N-1];
+					Aux1 = carafront[j][i];
+					carafront[j][i] = carafront[i][N-1-j];
 				
-				Aux2 = carafront[N-1-i][0];
-				carafront[N-1-i][0] = Aux1;
+					Aux2 = carafront[N-1-i][j];
+					carafront[N-1-i][j] = Aux1;
 				
-				Aux1 = carafront[N-1][N-1-i];
-				carafront[N-1][N-1-i] = Aux2;
+					Aux1 = carafront[N-1-j][N-1-i];
+					carafront[N-1-j][N-1-i] = Aux2;
 				
-				carafront[i][N-1] = Aux1;
+					carafront[i][N-1-j] = Aux1;
 				
+				}
 			}
 			
 		}
@@ -397,39 +495,45 @@ public class principal {
 		
 		String Aux1 = ""; 
 		String Aux2 = "";
+		int cuadrados = calcularcuadrados(N);
 		
 		if(movimiento == 0) { // Se mueve down
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
 				
-				Aux1 = caradown[i][N-1];
-				caradown[i][N-1] = caradown[0][i];
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux2 = caradown[N-1][N-1-i];
-				caradown[N-1][N-1-i] = Aux1;
+					Aux1 = caradown[i][N-1-j];
+					caradown[i][N-1-j] = caradown[j][i];
 				
-				Aux1 = caradown[N-1-i][0];
-				caradown[N-1-i][0] = Aux2;
+					Aux2 = caradown[N-1-j][N-1-i];
+					caradown[N-1-j][N-1-i] = Aux1;
 				
-				caradown[0][i] = Aux1;				
+					Aux1 = caradown[N-1-i][j];
+					caradown[N-1-i][j] = Aux2;
+				
+					caradown[j][i] = Aux1;				
+				}
 			}
 			
 		}else if(movimiento == N-1) { // Se mueve up
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
 				
-				Aux1 = caraup[i][N-1];
-				caraup[i][N-1] = caraup[0][i];
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux2 = caraup[N-1][N-i];
-				caraup[N-1][N-1-i] = Aux1;
+					Aux1 = caraup[i][N-1-j];
+					caraup[i][N-1-j] = caraup[j][i];
 				
-				Aux1 = caraup[N-1-i][0];
-				caraup[N-1-i][0] = Aux2;
+					Aux2 = caraup[N-1-j][N-i];
+					caraup[N-1-j][N-1-i] = Aux1;
 				
-				caraup[0][i] = Aux1;				
+					Aux1 = caraup[N-1-i][j];
+					caraup[N-1-i][j] = Aux2;
+				
+					caraup[j][i] = Aux1;				
+				}
 			}
-			
 		}
 		
 		for(int i=0; i<N; i++) {
@@ -437,8 +541,8 @@ public class principal {
 			Aux1 = caraback[N-1-movimiento][N-1-i];
 			caraback[N-1-movimiento][N-1-i] = caraleft[i][N-1-movimiento];
 			
-			Aux2 = cararight[movimiento][N-1-i];
-			cararight[movimiento][N-1-i] = Aux1;
+			Aux2 = cararight[N-1-i][movimiento];
+			cararight[N-1-i][movimiento] = Aux1;
 			
 			Aux1 = carafront[movimiento][i];
 			carafront[movimiento][i] = Aux2;
@@ -464,40 +568,48 @@ public class principal {
 		String Aux1 = ""; 
 		String Aux2 = "";
 		
-		if(movimiento == 0) { // Se mueve down
+		int cuadrados = calcularcuadrados(N);
+		
+		if(movimiento == 0) { // Se mueve down	
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
+			
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux1 = caradown[0][i];
-				caradown[0][i] = caradown[i][N-1];
 				
-				Aux2 = caradown[N-1-i][0];
-				caradown[N-1-i][0] = Aux1;
+					Aux1 = caradown[j][i];
+					caradown[j][i] = caradown[i][N-1-j];
 				
-				Aux1 = caradown[N-1][N-1-i];
-				caradown[N-1][N-1-i] = Aux2;
+					Aux2 = caradown[N-1-i][j];
+					caradown[N-1-i][j] = Aux1;
 				
-				caradown[i][N-1] = Aux1;
-						
+					Aux1 = caradown[N-1-j][N-1-i];
+					caradown[N-1-j][N-1-i] = Aux2;
+				
+					caradown[i][N-1-j] = Aux1;
+				}
 			}
 			
 		}else if(movimiento == N-1) { // Se mueve up
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
 				
-				Aux1 = caraup[0][i];
-				caraup[0][i] = caraup[i][N-1];
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux2 = caraup[N-1-i][0];
-				caraup[N-1-i][0] = Aux1;
+					Aux1 = caraup[j][i];
+					caraup[j][i] = caraup[i][N-1-j];
 				
-				Aux1 = caraup[N-1][N-i];
-				caraup[N-1][N-1-i] = Aux2;
+					Aux2 = caraup[N-1-i][j];
+					caraup[N-1-i][j] = Aux1;
 				
-				caraup[i][N-1] = Aux1;
+					Aux1 = caraup[N-1-j][N-i];
+					caraup[N-1-j][N-1-i] = Aux2;
+				
+					caraup[i][N-1-j] = Aux1;
 								
+				}
 			}
-			
+				
 		}
 		
 		for(int i=0; i<N; i++) {
@@ -508,14 +620,12 @@ public class principal {
 			Aux2 = carafront[movimiento][i];
 			carafront[movimiento][i] = Aux1;
 			
-			Aux1 = cararight[movimiento][N-1-i];
-			cararight[movimiento][N-1-i] = Aux2;
+			Aux1 = cararight[N-1-i][movimiento];
+			cararight[N-1-i][movimiento] = Aux2;
 			
 			caraback[N-1-movimiento][N-1-i] = Aux1;
 			
-		}
-		
-		
+		}	
 	}
 	
 	
@@ -529,40 +639,47 @@ public class principal {
 		String[][] caraup = cubo.get(5);
 		
 		int N = caraback.length;
+		int cuadrados = calcularcuadrados(N);
 		
 		String Aux1 = ""; 
 		String Aux2 = "";
 		
 		if(movimiento == 0) { // Se mueve left
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
+			
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux1 = caraleft[i][N-1];
-				caraleft[i][N-1] = caraleft[0][i];
+					Aux1 = caraleft[i][N-1-j];
+					caraleft[i][N-1-j] = caraleft[j][i];
+					
+					Aux2 = caraleft[N-1-j][N-1-i];
+					caraleft[N-1-j][N-1-i] = Aux1;
+					
+					Aux1 = caraleft[N-1-i][j];
+					caraleft[N-1-i][j] = Aux2;
 				
-				Aux2 = caraleft[N-1][N-1-i];
-				caraleft[N-1][N-1-i] = Aux1;
-				
-				Aux1 = caraleft[N-1-i][0];
-				caraleft[N-1-i][0] = Aux2;
-				
-				caraleft[0][i] = Aux1;				
+					caraleft[j][i] = Aux1;				
+				}
 			}
 			
 		}else if(movimiento == N-1) { // Se mueve right
 			
-			for(int i=0; i<N-1; i++) {
+			for(int j=0; j<cuadrados; j++) {
+			
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux1 = cararight[i][N-1];
-				cararight[i][N-1] = cararight[0][i];
+					Aux1 = cararight[i][N-1-j];
+					cararight[i][N-1-j] = cararight[j][i];
 				
-				Aux2 = cararight[N-1][N-i];
-				cararight[N-1][N-1-i] = Aux1;
+					Aux2 = cararight[N-1-j][N-i];
+					cararight[N-1-j][N-1-i] = Aux1;
 				
-				Aux1 = cararight[N-1-i][0];
-				cararight[N-1-i][0] = Aux2;
+					Aux1 = cararight[N-1-i][j];
+					cararight[N-1-i][j] = Aux2;
 				
-				cararight[0][i] = Aux1;				
+					cararight[j][i] = Aux1;				
+				}
 			}
 			
 		}
@@ -572,8 +689,8 @@ public class principal {
 			Aux1 = caraback[i][movimiento];
 			caraback[i][movimiento] = caradown[i][movimiento];
 			
-			Aux2 = caraup[N-1-movimiento][N-1-i];
-			caraup[N-1-movimiento][N-1-i] = Aux1;
+			Aux2 = caraup[N-1-i][N-1-movimiento];
+			caraup[N-1-i][N-1-movimiento] = Aux1;
 			
 			Aux1 = carafront[i][movimiento];
 			carafront[i][movimiento] = Aux2;
@@ -594,42 +711,48 @@ public class principal {
 		String[][] caraup = cubo.get(5);
 		
 		int N = caraback.length;
+		int cuadrados = calcularcuadrados(N);
 		
 		String Aux1 = ""; 
 		String Aux2 = "";
 		
 		if(movimiento == 0) { // Se mueve left
+
+			for(int j=0; j<cuadrados; j++) {
 			
-			for(int i=0; i<N-1; i++) {
+				for(int i=0+j; i<N-1-j; i++) {
 				
-				Aux1 = caraleft[0][i];
-				caraleft[0][i] = caraleft[i][N-1];
+					Aux1 = caraleft[j][i];
+					caraleft[j][i] = caraleft[i][N-1-j];
 				
-				Aux2 = caraleft[N-1-i][0];
-				caraleft[N-1-i][0] = Aux1;
+					Aux2 = caraleft[N-1-i][j];
+					caraleft[N-1-i][j] = Aux1;
 				
-				Aux1 = caraleft[N-1][N-1-i];
-				caraleft[N-1][N-1-i] = Aux2;
+					Aux1 = caraleft[N-1-j][N-1-i];
+					caraleft[N-1-j][N-1-i] = Aux2;
 				
-				caraleft[i][N-1] = Aux1;
+					caraleft[i][N-1-j] = Aux1;
 				
+				}
 			}
 			
 		}else if(movimiento == N-1) { // Se mueve right
 			
-			for(int i=0; i<N-1; i++) {
-				Aux1 = cararight[0][i];
-				cararight[0][i] = cararight[i][N-1];
-				
-				Aux2 = cararight[N-1-i][0];
-				cararight[N-1-i][0] = Aux1;
-				
-				Aux1 = cararight[N-1][N-i];
-				cararight[N-1][N-1-i] = Aux2;
-				
-				cararight[i][N-1] = Aux1;		
-			}
+			for(int j=0; j<cuadrados; j++) {
 			
+				for(int i=0+j; i<N-1-j; i++) {
+					Aux1 = cararight[j][i];
+					cararight[j][i] = cararight[i][N-1-j];
+				
+					Aux2 = cararight[N-1-i][j];
+					cararight[N-1-i][j] = Aux1;
+				
+					Aux1 = cararight[N-1-j][N-i];
+					cararight[N-1-j][N-1-i] = Aux2;
+				
+					cararight[i][N-1-j] = Aux1;		
+				}
+			}
 		}
 		
 		for(int i=0; i<N; i++) {
@@ -639,22 +762,21 @@ public class principal {
 			Aux2 = carafront[i][movimiento];
 			carafront[i][movimiento] = Aux1;
 			
-			Aux1 = caraup[N-1-movimiento][N-1-i];
-			caraup[N-1-movimiento][N-1-i] = Aux2;
+			Aux1 = caraup[N-1-i][N-1-movimiento];
+			caraup[N-1-i][N-1-movimiento] = Aux2;
 			
 			caraback[i][movimiento] = Aux1;
 			
 		}
-		
 	}
 	
-	public static Object[] leerjson(int n) throws FileNotFoundException, IOException, ParseException{
+	public static Object[] leerjson(String file, int n) throws FileNotFoundException, IOException, ParseException{
 		File f = new File(".");
 		String str = "";
 		String[] lados = {"BACK","DOWN","FRONT","LEFT","RIGHT","UP"};
 		Object[] devuelve = new Object[2];
 		JSONParser parser = new JSONParser();
-		Object obj = parser.parse(new FileReader(f.getCanonicalPath()+"/Cubos/cube.json"));
+		Object obj = parser.parse(new FileReader(f.getCanonicalPath()+file));
 		JSONObject jsonObject = (JSONObject) obj;
 		for(int i=0;i<6;i++) {
 			JSONArray contenido = (JSONArray) jsonObject.get(lados[i]);
@@ -665,11 +787,12 @@ public class principal {
 			
 			}
 		}
-		//Encripta la cedana en string MD5
+		//Encripta la cadena en string MD5
 		String md5 = DigestUtils.md5Hex(str);
 		devuelve[0] = str;
 		devuelve[1] = md5; 
 		return devuelve;
 		
 	}
+
 }
