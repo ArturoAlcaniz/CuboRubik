@@ -59,5 +59,9 @@ public class Frontera {
 		}
 		return texto;
 	}
+	
+	public ArrayList<NodoArbol> getNodos(){
+		return nodos;
+	}
 
 }
