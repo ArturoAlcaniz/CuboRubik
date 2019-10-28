@@ -44,8 +44,7 @@ public class principal {
 		Frontera f = new Frontera();
 		Object datosCubo[];
 		try {
-			datosCubo = leerjson(file);
-			String cubo = (String) datosCubo[0];
+			String cubo = leerjson(file);
 			NodoArbol padre = new NodoArbol(cubo, rd.nextInt(100));
 			f.insertar(padre); // La frontera inicial es el cubo del que partimos
 			
@@ -118,8 +117,7 @@ public class principal {
 	public static void comprobacionEjemplo() {
 		
 		try {
-			Object datosCubo[] = leerjson("/Cubos/cube3.json");
-			String cubo = (String) datosCubo[0];
+			String cubo = leerjson("/Cubos/cube3.json");
 			System.out.println("Cubo Inicial");
 			System.out.println(cubo);
 			String md5 = DigestUtils.md5Hex(cubo);
@@ -805,29 +803,36 @@ public class principal {
 		}
 	}
 	
-	public static Object[] leerjson(String file) throws FileNotFoundException, IOException, ParseException{
-		File f = new File(".");
-		String str = "";
+	public static String leerjson(String file) throws FileNotFoundException, IOException, ParseException{
+		
+		JSONParser parser = new JSONParser();
 		String[] lados = {"BACK","DOWN","FRONT","LEFT","RIGHT","UP"};
 		Object[] devuelve = new Object[2];
-		JSONParser parser = new JSONParser();
+		String str = "";
+		
+		File f = new File(".");
+		
 		Object obj = parser.parse(new FileReader(f.getCanonicalPath()+file));
 		JSONObject jsonObject = (JSONObject) obj;
+		
 		for(int i=0;i<6;i++) {
-			JSONArray contenido = (JSONArray) jsonObject.get(lados[i]);
-			for(Object a : contenido) {
-				String[] ad=a.toString().split(",|\\[|\\]");
-				for(int j=0;j<contenido.size();j++) 
-				str = str + ad[contenido.size()].toString();
 			
+			JSONArray contenido = (JSONArray) jsonObject.get(lados[i]);
+			Iterator iter = contenido.iterator();
+			
+			while(iter.hasNext()) {
+				
+				String s = ""+iter.next();
+				
+				for(int j=0; j<s.length(); j++) {
+					
+					if(isNumeric(s.substring(j, j+1))) {
+						str = str+s.substring(j, j+1);
+					}
+				}
 			}
 		}
-		//Encripta la cadena en string MD5
-		String md5 = DigestUtils.md5Hex(str);
-		devuelve[0] = str;
-		devuelve[1] = md5; 
-		return devuelve;
-		
+		return str;
 	}
 
 }
