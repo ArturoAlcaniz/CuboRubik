@@ -103,7 +103,6 @@ public class principal {
 							
 							
 							if(!visitados.contains(md5sucesor)) {
-								System.out.println(ListaNodos.get(i).getAccion());
 								NodoArbol s = ListaNodos.get(i);
 								NodoArbol nodofrontera = new NodoArbol(s.getPadre(), s.getEstado(), s.getAccion(), s.getf(), s.getd());
 								
