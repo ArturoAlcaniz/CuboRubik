@@ -5,17 +5,20 @@ public class NodoArbol {
 	String estado;
 	String accion;
 	int f;
+	int d;
 	
-	public NodoArbol(NodoArbol padre, String estado, String accion, int f) {
+	public NodoArbol(NodoArbol padre, String estado, String accion, int f, int d) {
 		this.padre = padre;
 		this.estado = estado;
 		this.accion = accion;
 		this.f = f;
+		this.d = d;
 	}
 	
-	public NodoArbol(String estado, int f) {
+	public NodoArbol(String estado, int f, int d) {
 		this.estado = estado;
 		this.f = f;
+		this.d = d;
 	}
 
 	public NodoArbol getPadre() {
@@ -48,5 +51,13 @@ public class NodoArbol {
 	
 	public void setf(int f) {
 		this.f = f;
+	}
+
+	public int getd() {
+		return d;
+	}
+	
+	public void setd(int d) {
+		this.d = d;
 	}
 }
