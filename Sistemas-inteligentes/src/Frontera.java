@@ -53,7 +53,7 @@ public class Frontera {
 		String texto = "";
 		while(iter.hasNext()) {
 			NodoArbol a = iter.next();
-			texto = texto+"Nodo frontera en posicion: "+posicion+", estado: "+a.getEstado()+", accion: "+a.getAccion()+" y con f: "+a.getf();
+			texto = texto+"Nodo frontera en posicion: "+posicion+", estado: "+a.getEstado()+", accion: "+a.getAccion()+", profundidad:"+a.getd()+" y con f: "+a.getf();
 			texto = texto+"\n";
 			posicion++;
 		}
@@ -65,3 +65,4 @@ public class Frontera {
 	}
 
 }
+
