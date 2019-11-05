@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -13,7 +14,9 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.xml.sax.SAXException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
+
 
 
 public class principal {
@@ -21,12 +24,19 @@ public class principal {
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		
+		//Comprueba que no haya fallos en los movimientos (tarea1)
 		comprobacionEjemplo();
 		
-		ArrayList<String> solucion = encontrarSolucion("/Cubos/cube.json", 5);
-		if(solucion != null) {
-			System.out.println("Solucion encontrada: ");
-			imprimirSolucion(solucion);	
+		EspacioEstados prob = new EspacioEstados("/Cubos/cube.json"); 
+		
+		ArrayList<NodoArbol> resultado = new ArrayList<NodoArbol>();
+		
+		resultado = Busqueda(prob, "anchura", 6);
+		
+		if(!resultado.isEmpty()) {
+			System.out.println("Solucion encontrada");
+			imprimirSolucion(resultado);
+			
 		}else {
 			System.out.println("Solucion no encontrada");
 		}
@@ -36,38 +46,78 @@ public class principal {
 
 	}
 	
-	public static ArrayList<String> encontrarSolucion(String file, int limiteProfundidad) {
-		Random rd = new Random();
-		ArrayList<String> solucion = new ArrayList<String>();
+	public static ArrayList<NodoArbol> Busqueda(EspacioEstados prob, String estrategia, int limiteProfundidad) {	
+		
+		ArrayList<NodoArbol> solucion = new ArrayList<NodoArbol>();
 		ArrayList<String> visitados = new ArrayList<String>();
-		NodoArbol a = null;
+		
 		Frontera f = new Frontera();
-		Object datosCubo[];
+		
+		Random rd = new Random();
+		
+		boolean sol = false;
+		
+		NodoArbol a = null;
+		
+		int n=0;
+		
 		try {
-			String cubo = leerjson(file);
-			NodoArbol padre = new NodoArbol(cubo, rd.nextInt(100));
+			
+			String cubo = LecturaJSON.leer(prob.getFile());
+			
+			NodoArbol padre = new NodoArbol(cubo, 0, 0);
+			
 			f.insertar(padre); // La frontera inicial es el cubo del que partimos
 			
-			while (f.getNodos().size()>=1) {
+			while (sol == false && !f.estavacia()) {
 				
 				a = f.getNodos().get(0);
 				
 				if(EsObjetivo(a.getEstado())) {
+					
+					while(a.getPadre() != null) {
+						
+						solucion.add(0, a);
+						a = a.getPadre();
+				
+					}
+					solucion.add(0, a);
+					
+					sol = true;
 					break;
+					
 				}else {
 					
-					if(calcularDepth(a)<limiteProfundidad) {  //Control de profundidad
+					if(a.getd()<limiteProfundidad) {  //Control de profundidad
 						
-						String md5 = DigestUtils.md5Hex(a.getEstado());
-						visitados.add(md5);
+						ArrayList<String[]> sucesores = prob.Sucesores(a.getEstado());
+						
+						ArrayList<NodoArbol> ListaNodos = ListaNodos(sucesores, a, estrategia);
+						
+						visitados.add(DigestUtils.md5Hex(a.getEstado()));
 						f.eliminar();
-						GenerarFrontera(visitados, f, a);
-					
+						
+						for(int i=0; i<ListaNodos.size(); i++) {
+							
+							String md5sucesor = DigestUtils.md5Hex(ListaNodos.get(i).getEstado());
+							
+							
+							if(!visitados.contains(md5sucesor)) {
+								System.out.println(ListaNodos.get(i).getAccion());
+								NodoArbol s = ListaNodos.get(i);
+								NodoArbol nodofrontera = new NodoArbol(s.getPadre(), s.getEstado(), s.getAccion(), s.getf(), s.getd());
+								
+								f.insertar(nodofrontera);
+							}
+						}
+						
+						
+						
 					}else {
-						
-						f.eliminar();
 					
+						f.eliminar();
 					}
+
 				}
 			}
 			
@@ -80,82 +130,74 @@ public class principal {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		if(EsObjetivo(a.getEstado())) {
 		
-			while(a.getPadre() != null) {
-				
-				solucion.add(0, a.getAccion());
-				a = a.getPadre();
+		return solucion;
 		
-			}
-			
-			return solucion;
-		
-		}else {
-			
-			return null;
-		
-		}
 		
 	}
 	
-	public static void imprimirSolucion(ArrayList<String> solucion) {
-		Iterator<String> iter = solucion.iterator();
+	public static void imprimirSolucion(ArrayList<NodoArbol> solucion) {
+		Iterator<NodoArbol> iter = solucion.iterator();
 		while(iter.hasNext()) {
-			System.out.print(iter.next()+" -> ");
+			NodoArbol a = iter.next();
+			String md5 = DigestUtils.md5Hex(a.getEstado());
+			if(a.getPadre() == null) {
+				System.out.println("[None]"+md5+",c="+a.getd()+",p="+a.getd()+",f="+a.getf());
+			}else {
+				System.out.println("["+a.getAccion()+"]"+md5+",c="+a.getd()+",p="+a.getd()+",f="+a.getf());
+			}
 		}
 		
 	}
 	
 	public static void imprimirMD5(ArrayList<String[][]> cubomatriz) {
-		String cubo = convertircubomatriz(cubomatriz);
+		String cubo = OperacionesCubo.convertircubomatriz(cubomatriz);
 		String md5 = DigestUtils.md5Hex(cubo);
 		System.out.println(md5);
 	}
 	
-	
 	public static void comprobacionEjemplo() {
 		
 		try {
-			String cubo = leerjson("/Cubos/cube3.json");
+			String cubo = LecturaJSON.leer("/Cubos/cube3.json");
 			System.out.println("Cubo Inicial");
 			System.out.println(cubo);
 			String md5 = DigestUtils.md5Hex(cubo);
 			System.out.println(md5);
 			
 			ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
-			inicializarcubomatriz(cubomatriz, cubo);
+			OperacionesCubo.inicializarcubomatriz(cubomatriz, cubo);
 			
 			System.out.println("Accion l3:");
-			GirarLeft2(cubomatriz, 3);
+			OperacionesCubo.GirarLeft2(cubomatriz, 3);
 			imprimirMD5(cubomatriz);
 			
 			System.out.println("Accion D1:");
-			GirarDown(cubomatriz, 1);
+			OperacionesCubo.GirarDown(cubomatriz, 1);
 			imprimirMD5(cubomatriz);
 			
 			System.out.println("Accion l1:");
-			GirarLeft2(cubomatriz, 1);
+			OperacionesCubo.GirarLeft2(cubomatriz, 1);
 			imprimirMD5(cubomatriz);
 			
 			System.out.println("Accion d0:");
-			GirarDown2(cubomatriz, 0);
+			OperacionesCubo.GirarDown2(cubomatriz, 0);
 			imprimirMD5(cubomatriz);
 			
 			System.out.println("Accion B0:");
-			GirarBack(cubomatriz, 0);
+			OperacionesCubo.GirarBack(cubomatriz, 0);
 			imprimirMD5(cubomatriz);
 			
 			System.out.println("Accion b5:");
-			GirarBack2(cubomatriz, 5);
+			OperacionesCubo.GirarBack2(cubomatriz, 5);
 			imprimirMD5(cubomatriz);
 			
 			System.out.println("Accion l2:");
-			GirarLeft2(cubomatriz, 2);
+			OperacionesCubo.GirarLeft2(cubomatriz, 2);
 			imprimirMD5(cubomatriz);
 			
 			System.out.println("Accion d1:");
-			GirarDown2(cubomatriz, 1);
+			OperacionesCubo.GirarDown2(cubomatriz, 1);
 			imprimirMD5(cubomatriz);
 			
 			
@@ -180,85 +222,43 @@ public class principal {
 		return d;
 	}
 	
-	public static void GenerarFrontera(ArrayList<String> visitados, Frontera f, NodoArbol padre) {
+	public static ArrayList<NodoArbol> ListaNodos(ArrayList<String[]> ListaSucesores, NodoArbol nodo_actual, String estrategia){
 		
+		ArrayList<NodoArbol> ListaNodos = new ArrayList<NodoArbol>();
 		Random rd = new Random();
-		String cubo = padre.getEstado();
-		ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
-		int N = (int) Math.sqrt(cubo.length()/6);
-		String cubo2;
-		String md5;
-		NodoArbol a;
+		int f = 0;
 		
-		for(int i = 0; i<N-1; i++) {
-			inicializarcubomatriz(cubomatriz, cubo);
-			GirarBack(cubomatriz, i);
-			cubo2 = convertircubomatriz(cubomatriz);
-			md5 = DigestUtils.md5Hex(cubo2);
-			if(!visitados.contains(md5)) {
-				a = new NodoArbol(padre, cubo2, "B"+i, rd.nextInt(100));
-				f.insertar(a);
+		for(int i=0; i<ListaSucesores.size(); i++) {
+			
+			String[] estado_sucesor = ListaSucesores.get(i);
+
+			int Aleatorio = rd.nextInt(100);
+				
+			if(estrategia.equals("anchura") || estrategia.equals("coste_uniforme")) {
+					
+				f = nodo_actual.getd()+1;
+					
+			}else if(estrategia.equals("profundidad")) {
+					
+				f = 1/(nodo_actual.getd()+2);
+					
 			}
 				
-			
-			inicializarcubomatriz(cubomatriz, cubo);
-			GirarBack2(cubomatriz, i);
-			cubo2 = convertircubomatriz(cubomatriz);
-			md5 = DigestUtils.md5Hex(cubo2);
-			if(!visitados.contains(md5)) {
-				a = new NodoArbol(padre, cubo2, "b"+i, rd.nextInt(100));
-				f.insertar(a);
-			}
-			
-			
-			inicializarcubomatriz(cubomatriz, cubo);
-			GirarDown(cubomatriz, i);
-			cubo2 = convertircubomatriz(cubomatriz);
-			md5 = DigestUtils.md5Hex(cubo2);
-			if(!visitados.contains(md5)) {
-				a = new NodoArbol(padre, cubo2, "D"+i, rd.nextInt(100));
-				f.insertar(a);
-			}
-			
-			
-			inicializarcubomatriz(cubomatriz, cubo);
-			GirarDown2(cubomatriz, i);
-			cubo2 = convertircubomatriz(cubomatriz);
-			md5 = DigestUtils.md5Hex(cubo2);
-			if(!visitados.contains(md5)) {
-				a = new NodoArbol(padre, cubo2, "d"+i, rd.nextInt(100));
-				f.insertar(a);
-			}
-			
-			
-			inicializarcubomatriz(cubomatriz, cubo);
-			GirarLeft(cubomatriz, i);
-			cubo2 = convertircubomatriz(cubomatriz);
-			md5 = DigestUtils.md5Hex(cubo2);
-			if(!visitados.contains(md5)) {
-				a = new NodoArbol(padre, cubo2, "L"+i, rd.nextInt(100));
-				f.insertar(a);
-			}
-			
-			
-			inicializarcubomatriz(cubomatriz, cubo);
-			GirarLeft2(cubomatriz, i);
-			cubo2 = convertircubomatriz(cubomatriz);
-			md5 = DigestUtils.md5Hex(cubo2);
-			if(!visitados.contains(md5)) {
-				a = new NodoArbol(padre, cubo2, "l"+i, rd.nextInt(100));
-				f.insertar(a);
-			}
-			
+			NodoArbol a = new NodoArbol(nodo_actual, estado_sucesor[0], estado_sucesor[1], f, nodo_actual.getd()+1);
+			ListaNodos.add(a);
 				
 		}
 		
+		return ListaNodos;
+		
 	}
+	
+	
 	
 	public static boolean EsObjetivo(String estado) {
 		
 		ArrayList<String[][]> cubo = new ArrayList<String[][]>();
-		inicializarcubomatriz(cubo, estado);
+		OperacionesCubo.inicializarcubomatriz(cubo, estado);
 		
 		boolean comprobar = true;
 		int ca = 0;
@@ -295,544 +295,16 @@ public class principal {
 		
 	}
 	
-	public static String convertircubomatriz(ArrayList<String[][]> cubomatriz) {
-		
-		String cubo = "";
-		
-		for(int ca = 0; ca<6; ca++) {
-			
-			String[][] cara = cubomatriz.get(ca);
-			
-			for(int i=0; i<cara.length; i++) {
-				
-				for(int j=0; j<cara[i].length; j++) {
-					
-					cubo = cubo+cara[i][j];
-					
-				}
-			}
-			
-		}
-		
-		return cubo;
-		
-	}
 	
-	public static void inicializarcubomatriz(ArrayList<String[][]> cubomatriz, String cubo) {
-		
-		int N = (int)Math.sqrt(cubo.length()/6);
-		int posicion = 0;
-
-		for(int ca = 0; ca<6; ca++) {
-			
-			String[][] cara = new String[N][N];
-			
-			for(int i=0; i<N; i++) {
-				
-				for(int j=0; j<N; j++) {
-					
-					cara[i][j] = ""+cubo.charAt(posicion);
-					posicion++;
-					
-				}
-			}
-			
-			cubomatriz.add(cara);
-			
+	public static boolean isNumeric(String cadena){
+		try {
+			Integer.parseInt(cadena);
+			return true;
+		} catch (NumberFormatException nfe){
+			return false;
 		}
 	}
 	
-	public static void GirarBack(ArrayList<String[][]> cubo, int movimiento) {
-		
-		String[][] caraback = cubo.get(0);
-		String[][] caradown = cubo.get(1);
-		String[][] carafront = cubo.get(2);
-		String[][] caraleft = cubo.get(3);
-		String[][] cararight = cubo.get(4);
-		String[][] caraup = cubo.get(5);
-		
-		int N = caraback.length;
-		
-		String Aux1 = ""; 
-		String Aux2 = "";
-		int cuadrados = calcularcuadrados(N);
-		
-		if(movimiento == 0) { // Se mueve Back
-			
-			for(int j=0; j<cuadrados; j++) {
-			
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = caraback[i][N-1-j];
-					caraback[i][N-1-j] = caraback[j][i];
-				
-					Aux2 = caraback[N-1-j][N-1-i];
-					caraback[N-1-j][N-1-i] = Aux1;
-				
-					Aux1 = caraback[N-1-i][j];
-					caraback[N-1-i][j] = Aux2;
-				
-					caraback[j][i] = Aux1;				
-				}
-			}
-			
-		}else if(movimiento == N-1) { // Se mueve Front
-			
-			for(int j=0; j<cuadrados; j++) {
-			
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = carafront[i][N-1-j];
-					carafront[i][N-1-j] = carafront[j][i];
-				
-					Aux2 = carafront[N-1-j][N-1-i];
-					carafront[N-1-j][N-1-i] = Aux1;
-				
-					Aux1 = carafront[N-i][j];
-					carafront[N-1-i][j] = Aux2;
-				
-					carafront[j][i] = Aux1;				
-				}
-			}
-			
-		}
-		
-		for(int i=0; i<N; i++) {
-
-			Aux1 = cararight[movimiento][i];
-			cararight[movimiento][i] = caradown[movimiento][i];
-			
-			Aux2 = caraup[movimiento][i];
-			caraup[movimiento][i] = Aux1;
-			
-			Aux1 = caraleft[movimiento][i];
-			caraleft[movimiento][i] = Aux2;
-			
-			caradown[movimiento][i] = Aux1;
-			
-		}
-		
-	}
 	
-	public static void imprimirmatriz(String[][] cubo) {
-		for(int i=0; i<cubo.length;i++) {
-			for(int j=0; j<cubo[i].length; j++) {
-				System.out.print(cubo[i][j]+" ");
-			}
-			System.out.println();
-		}
-	}
-	
-	public static int calcularcuadrados(int N) {
-		int cuadrados = 0;
-		int aux = 4;
-		while(aux>3) {
-			int M = N*N;
-			int c = 3;
-			int t = N*c;
-			aux = M-t;
-			N=N-2;
-			cuadrados++;
-		}
-		return cuadrados;
-	}
-	
-	public static void GirarBack2(ArrayList<String[][]> cubo, int movimiento) {
-		
-		
-		String[][] caraback = cubo.get(0);
-		String[][] caradown = cubo.get(1);
-		String[][] carafront = cubo.get(2);
-		String[][] caraleft = cubo.get(3);
-		String[][] cararight = cubo.get(4);
-		String[][] caraup = cubo.get(5);
-
-	
-		int N = caraback.length;
-		
-		String Aux1 = ""; 
-		String Aux2 = "";
-		int cuadrados = calcularcuadrados(N);
-		
-		if(movimiento == 0) { // Se mueve Back
-			
-			for(int j=0; j<cuadrados; j++) {
-				
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = caraback[j][i];
-					caraback[j][i] = caraback[i][N-1-j];
-				
-					Aux2 = caraback[N-1-i][j];
-					caraback[N-1-i][j] = Aux1;
-				
-					Aux1 = caraback[N-1-j][N-1-i];
-					caraback[N-1-j][N-1-i] = Aux2;
-				
-					caraback[i][N-1-j] = Aux1;
-							
-				}
-			}
-			
-		}else if(movimiento == N-1) { // Se mueve Front
-			
-			for(int j=0; j<cuadrados; j++) {
-			
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = carafront[j][i];
-					carafront[j][i] = carafront[i][N-1-j];
-				
-					Aux2 = carafront[N-1-i][j];
-					carafront[N-1-i][j] = Aux1;
-				
-					Aux1 = carafront[N-1-j][N-1-i];
-					carafront[N-1-j][N-1-i] = Aux2;
-				
-					carafront[i][N-1-j] = Aux1;
-				
-				}
-			}
-			
-		}
-		
-		for(int i=0; i<N; i++) {
-
-			Aux1 = caradown[movimiento][i];
-			caradown[movimiento][i] = cararight[movimiento][i];
-			
-			Aux2 = caraleft[movimiento][i];
-			caraleft[movimiento][i] = Aux1;
-			
-			Aux1 = caraup[movimiento][i];
-			caraup[movimiento][i] = Aux2;
-			
-			cararight[movimiento][i] = Aux1;
-			
-		}
-		
-		
-	}
-	
-	
-	public static void GirarDown(ArrayList<String[][]> cubo, int movimiento) {
-		
-		String[][] caraback = cubo.get(0);
-		String[][] caradown = cubo.get(1);
-		String[][] carafront = cubo.get(2);
-		String[][] caraleft = cubo.get(3);
-		String[][] cararight = cubo.get(4);
-		String[][] caraup = cubo.get(5);
-		
-		int N = caraback.length;
-		
-		String Aux1 = ""; 
-		String Aux2 = "";
-		int cuadrados = calcularcuadrados(N);
-		
-		if(movimiento == 0) { // Se mueve down
-			
-			for(int j=0; j<cuadrados; j++) {
-				
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = caradown[i][N-1-j];
-					caradown[i][N-1-j] = caradown[j][i];
-				
-					Aux2 = caradown[N-1-j][N-1-i];
-					caradown[N-1-j][N-1-i] = Aux1;
-				
-					Aux1 = caradown[N-1-i][j];
-					caradown[N-1-i][j] = Aux2;
-				
-					caradown[j][i] = Aux1;				
-				}
-			}
-			
-		}else if(movimiento == N-1) { // Se mueve up
-			
-			for(int j=0; j<cuadrados; j++) {
-				
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = caraup[i][N-1-j];
-					caraup[i][N-1-j] = caraup[j][i];
-				
-					Aux2 = caraup[N-1-j][N-i];
-					caraup[N-1-j][N-1-i] = Aux1;
-				
-					Aux1 = caraup[N-1-i][j];
-					caraup[N-1-i][j] = Aux2;
-				
-					caraup[j][i] = Aux1;				
-				}
-			}
-		}
-		
-		for(int i=0; i<N; i++) {
-
-			Aux1 = caraback[N-1-movimiento][N-1-i];
-			caraback[N-1-movimiento][N-1-i] = caraleft[i][N-1-movimiento];
-			
-			Aux2 = cararight[N-1-i][movimiento];
-			cararight[N-1-i][movimiento] = Aux1;
-			
-			Aux1 = carafront[movimiento][i];
-			carafront[movimiento][i] = Aux2;
-			
-			caraleft[i][N-1-movimiento] = Aux1;
-			
-		}
-		
-	}
-	
-	
-	public static void GirarDown2(ArrayList<String[][]> cubo, int movimiento) {
-		
-		String[][] caraback = cubo.get(0);
-		String[][] caradown = cubo.get(1);
-		String[][] carafront = cubo.get(2);
-		String[][] caraleft = cubo.get(3);
-		String[][] cararight = cubo.get(4);
-		String[][] caraup = cubo.get(5);
-		
-		int N = caraback.length;
-		
-		String Aux1 = ""; 
-		String Aux2 = "";
-		
-		int cuadrados = calcularcuadrados(N);
-		
-		if(movimiento == 0) { // Se mueve down	
-			
-			for(int j=0; j<cuadrados; j++) {
-			
-				for(int i=0+j; i<N-1-j; i++) {
-				
-				
-					Aux1 = caradown[j][i];
-					caradown[j][i] = caradown[i][N-1-j];
-				
-					Aux2 = caradown[N-1-i][j];
-					caradown[N-1-i][j] = Aux1;
-				
-					Aux1 = caradown[N-1-j][N-1-i];
-					caradown[N-1-j][N-1-i] = Aux2;
-				
-					caradown[i][N-1-j] = Aux1;
-				}
-			}
-			
-		}else if(movimiento == N-1) { // Se mueve up
-			
-			for(int j=0; j<cuadrados; j++) {
-				
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = caraup[j][i];
-					caraup[j][i] = caraup[i][N-1-j];
-				
-					Aux2 = caraup[N-1-i][j];
-					caraup[N-1-i][j] = Aux1;
-				
-					Aux1 = caraup[N-1-j][N-i];
-					caraup[N-1-j][N-1-i] = Aux2;
-				
-					caraup[i][N-1-j] = Aux1;
-								
-				}
-			}
-				
-		}
-		
-		for(int i=0; i<N; i++) {
-
-			Aux1 = caraleft[i][N-1-movimiento];
-			caraleft[i][N-1-movimiento] = caraback[N-1-movimiento][N-1-i];
-			
-			Aux2 = carafront[movimiento][i];
-			carafront[movimiento][i] = Aux1;
-			
-			Aux1 = cararight[N-1-i][movimiento];
-			cararight[N-1-i][movimiento] = Aux2;
-			
-			caraback[N-1-movimiento][N-1-i] = Aux1;
-			
-		}	
-	}
-	
-	
-	public static void GirarLeft(ArrayList<String[][]> cubo, int movimiento) {
-		
-		String[][] caraback = cubo.get(0);
-		String[][] caradown = cubo.get(1);
-		String[][] carafront = cubo.get(2);
-		String[][] caraleft = cubo.get(3);
-		String[][] cararight = cubo.get(4);
-		String[][] caraup = cubo.get(5);
-		
-		int N = caraback.length;
-		int cuadrados = calcularcuadrados(N);
-		
-		String Aux1 = ""; 
-		String Aux2 = "";
-		
-		if(movimiento == 0) { // Se mueve left
-			
-			for(int j=0; j<cuadrados; j++) {
-			
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = caraleft[i][N-1-j];
-					caraleft[i][N-1-j] = caraleft[j][i];
-					
-					Aux2 = caraleft[N-1-j][N-1-i];
-					caraleft[N-1-j][N-1-i] = Aux1;
-					
-					Aux1 = caraleft[N-1-i][j];
-					caraleft[N-1-i][j] = Aux2;
-				
-					caraleft[j][i] = Aux1;				
-				}
-			}
-			
-		}else if(movimiento == N-1) { // Se mueve right
-			
-			for(int j=0; j<cuadrados; j++) {
-			
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = cararight[i][N-1-j];
-					cararight[i][N-1-j] = cararight[j][i];
-				
-					Aux2 = cararight[N-1-j][N-i];
-					cararight[N-1-j][N-1-i] = Aux1;
-				
-					Aux1 = cararight[N-1-i][j];
-					cararight[N-1-i][j] = Aux2;
-				
-					cararight[j][i] = Aux1;				
-				}
-			}
-			
-		}
-		
-		for(int i=0; i<N; i++) {
-
-			Aux1 = caraback[i][movimiento];
-			caraback[i][movimiento] = caradown[i][movimiento];
-			
-			Aux2 = caraup[N-1-i][N-1-movimiento];
-			caraup[N-1-i][N-1-movimiento] = Aux1;
-			
-			Aux1 = carafront[i][movimiento];
-			carafront[i][movimiento] = Aux2;
-			
-			caradown[i][movimiento] = Aux1;
-			
-		}
-		
-	}
-	
-	public static void GirarLeft2(ArrayList<String[][]> cubo, int movimiento) {
-		
-		String[][] caraback = cubo.get(0);
-		String[][] caradown = cubo.get(1);
-		String[][] carafront = cubo.get(2);
-		String[][] caraleft = cubo.get(3);
-		String[][] cararight = cubo.get(4);
-		String[][] caraup = cubo.get(5);
-		
-		int N = caraback.length;
-		int cuadrados = calcularcuadrados(N);
-		
-		String Aux1 = ""; 
-		String Aux2 = "";
-		
-		if(movimiento == 0) { // Se mueve left
-
-			for(int j=0; j<cuadrados; j++) {
-			
-				for(int i=0+j; i<N-1-j; i++) {
-				
-					Aux1 = caraleft[j][i];
-					caraleft[j][i] = caraleft[i][N-1-j];
-				
-					Aux2 = caraleft[N-1-i][j];
-					caraleft[N-1-i][j] = Aux1;
-				
-					Aux1 = caraleft[N-1-j][N-1-i];
-					caraleft[N-1-j][N-1-i] = Aux2;
-				
-					caraleft[i][N-1-j] = Aux1;
-				
-				}
-			}
-			
-		}else if(movimiento == N-1) { // Se mueve right
-			
-			for(int j=0; j<cuadrados; j++) {
-			
-				for(int i=0+j; i<N-1-j; i++) {
-					Aux1 = cararight[j][i];
-					cararight[j][i] = cararight[i][N-1-j];
-				
-					Aux2 = cararight[N-1-i][j];
-					cararight[N-1-i][j] = Aux1;
-				
-					Aux1 = cararight[N-1-j][N-i];
-					cararight[N-1-j][N-1-i] = Aux2;
-				
-					cararight[i][N-1-j] = Aux1;		
-				}
-			}
-		}
-		
-		for(int i=0; i<N; i++) {
-			Aux1 = caradown[i][movimiento];
-			caradown[i][movimiento] = caraback[i][movimiento];
-			
-			Aux2 = carafront[i][movimiento];
-			carafront[i][movimiento] = Aux1;
-			
-			Aux1 = caraup[N-1-i][N-1-movimiento];
-			caraup[N-1-i][N-1-movimiento] = Aux2;
-			
-			caraback[i][movimiento] = Aux1;
-			
-		}
-	}
-	
-	public static String leerjson(String file) throws FileNotFoundException, IOException, ParseException{
-		
-		JSONParser parser = new JSONParser();
-		String[] lados = {"BACK","DOWN","FRONT","LEFT","RIGHT","UP"};
-		Object[] devuelve = new Object[2];
-		String str = "";
-		
-		File f = new File(".");
-		
-		Object obj = parser.parse(new FileReader(f.getCanonicalPath()+file));
-		JSONObject jsonObject = (JSONObject) obj;
-		
-		for(int i=0;i<6;i++) {
-			
-			JSONArray contenido = (JSONArray) jsonObject.get(lados[i]);
-			Iterator iter = contenido.iterator();
-			
-			while(iter.hasNext()) {
-				
-				String s = ""+iter.next();
-				
-				for(int j=0; j<s.length(); j++) {
-					
-					if(isNumeric(s.substring(j, j+1))) {
-						str = str+s.substring(j, j+1);
-					}
-				}
-			}
-		}
-		return str;
-	}
 
 }
