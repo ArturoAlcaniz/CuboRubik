@@ -29,27 +29,28 @@ public class principal {
 		
 		EspacioEstados prob = new EspacioEstados("/Cubos/cube.json"); 
 		
-		ArrayList<NodoArbol> resultado = new ArrayList<NodoArbol>();
+		ArrayList<ArrayList> resultado = new ArrayList<ArrayList>();
+		ArrayList<ArrayList> resultado2 = new ArrayList<ArrayList>();
+		ArrayList<ArrayList> resultado3 = new ArrayList<ArrayList>();
 		
 		resultado = Busqueda(prob, "anchura", 6);
+		resultado2 = Busqueda(prob, "profundidad", 6);
+		resultado3 = Busqueda(prob, "coste_uniforme", 6);
 		
-		if(!resultado.isEmpty()) {
-			System.out.println("Solucion encontrada");
-			imprimirSolucion(resultado);
-			
-		}else {
-			System.out.println("Solucion no encontrada");
-		}
+		imprimirSolucion(resultado);
+		imprimirSolucion(resultado2);
+		imprimirSolucion(resultado3);
 		
 		long endTime = System.currentTimeMillis();
 		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
 
 	}
 	
-	public static ArrayList<NodoArbol> Busqueda(EspacioEstados prob, String estrategia, int limiteProfundidad) {	
+	public static ArrayList<ArrayList> Busqueda(EspacioEstados prob, String estrategia, int limiteProfundidad) {	
 		
 		ArrayList<NodoArbol> solucion = new ArrayList<NodoArbol>();
 		ArrayList<String> visitados = new ArrayList<String>();
+		ArrayList<String> ids = new ArrayList<String>();
 		
 		Frontera f = new Frontera();
 		
@@ -75,12 +76,17 @@ public class principal {
 				
 				if(EsObjetivo(a.getEstado())) {
 					
+					visitados.add(DigestUtils.md5Hex(a.getEstado()));
+					
 					while(a.getPadre() != null) {
 						
+						ids.add(0, ""+visitados.indexOf(DigestUtils.md5Hex(a.getEstado())));
 						solucion.add(0, a);
 						a = a.getPadre();
 				
 					}
+					
+					ids.add(0, ""+visitados.indexOf(DigestUtils.md5Hex(a.getEstado())));
 					solucion.add(0, a);
 					
 					sol = true;
@@ -130,20 +136,32 @@ public class principal {
 			e.printStackTrace();
 		}
 		
-		return solucion;
+		ArrayList<ArrayList> SOL = new ArrayList<ArrayList>();
+		SOL.add(solucion);
+		SOL.add(0, ids);
+		return SOL;
 		
 		
 	}
 	
-	public static void imprimirSolucion(ArrayList<NodoArbol> solucion) {
-		Iterator<NodoArbol> iter = solucion.iterator();
-		while(iter.hasNext()) {
-			NodoArbol a = iter.next();
-			String md5 = DigestUtils.md5Hex(a.getEstado());
-			if(a.getPadre() == null) {
-				System.out.println("[None]"+md5+",c="+a.getd()+",p="+a.getd()+",f="+a.getf());
-			}else {
-				System.out.println("["+a.getAccion()+"]"+md5+",c="+a.getd()+",p="+a.getd()+",f="+a.getf());
+	public static void imprimirSolucion(ArrayList<ArrayList> solucion) {
+		if(solucion.get(1).isEmpty()) {
+			System.out.println("Solucion no encontrada");
+		}else {
+			System.out.println("Solucion encontrada");
+	
+			Iterator<NodoArbol> iter = solucion.get(1).iterator();
+			ArrayList<String> ids = solucion.get(0);
+			int n=-1;
+			while(iter.hasNext()) {
+				n++;
+				NodoArbol a = iter.next();
+				String md5 = DigestUtils.md5Hex(a.getEstado());
+				if(a.getPadre() == null) {
+					System.out.println("["+ids.get(n)+"][None]"+md5+",c="+a.getd()+",p="+a.getd()+",f="+a.getf());
+				}else {
+					System.out.println("["+ids.get(n)+"]["+a.getAccion()+"]"+md5+",c="+a.getd()+",p="+a.getd()+",f="+a.getf());
+				}
 			}
 		}
 		
@@ -210,15 +228,6 @@ public class principal {
 			e.printStackTrace();
 		}
 		
-	}
-	
-	public static int calcularDepth(NodoArbol a) {
-		int d = 0;
-		while(a.getPadre() != null) {
-			a = a.getPadre();
-			d++;
-		}
-		return d;
 	}
 	
 	public static ArrayList<NodoArbol> ListaNodos(ArrayList<String[]> ListaSucesores, NodoArbol nodo_actual, String estrategia){
