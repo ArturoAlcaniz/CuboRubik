@@ -1,7 +1,66 @@
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class OperacionesCubo {
 
+	
+	public static double calculoDesorden(String estado) {
+		double entropia = 0.0;
+		double[] c = new double[6];
+		ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
+		inicializarcubomatriz(cubomatriz, estado);
+		Iterator<String[][]> iter = cubomatriz.iterator();
+		double N = (double)Math.sqrt(estado.length()/6);
+		double resultado = 0.0;
+		
+		while(iter.hasNext()) {
+			
+			entropia = 0.0;
+		
+			c = new double[6];
+			
+			String[][] cara = iter.next();
+		
+			for(int i=0; i<cara.length; i++) {
+				
+				for(int j=0; j<cara[i].length; j++) {
+				
+					int indice = Integer.parseInt(cara[i][j]);
+					
+					c[indice]++;
+					
+				}
+				
+			
+			}
+			double aux = c[0];
+			for(int color=0; color<c.length; color++) {
+				if(c[color]>=aux) {
+					entropia = 0.0;
+					aux = c[color];
+					entropia = entropia + GenerarLog(c[color]/(N*N), 6);
+				}
+			}
+			resultado = resultado + (entropia*-1);
+		}
+		return resultado;
+
+	}
+	
+	public static double GenerarLog(double argumento, int base) {
+		
+		double logbase10 = 0.0;
+		double log = 0.0;
+		logbase10 = Math.log(argumento);
+		log = Math.log(base);
+		double result = logbase10/log;
+	
+
+		return result;
+		
+		
+	}
+	
 	public static ArrayList<String[][]> inicializarcubomatriz(ArrayList<String[][]> cubomatriz, String cubo) {
 		
 		int N = (int)Math.sqrt(cubo.length()/6);
