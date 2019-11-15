@@ -358,10 +358,8 @@ public class principal {
 					
 				double h = OperacionesCubo.calculoDesorden(estado_sucesor[0]);
 				
-				if((nodo_actual.getd()+1)<=limiteProfundidad) {
-					NodoArbol n = new NodoArbol(nodo_actual, estado_sucesor[0], estado_sucesor[1], h, f, nodo_actual.getd()+1);
-					ListaNodos.add(n);
-				}
+				NodoArbol n = new NodoArbol(nodo_actual, estado_sucesor[0], estado_sucesor[1], h, f, nodo_actual.getd()+1);
+				ListaNodos.add(n);
 				
 				
 			}
