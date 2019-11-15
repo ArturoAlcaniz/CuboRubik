@@ -6,18 +6,15 @@ public class OperacionesCubo {
 	
 	public static double calculoDesorden(String estado) {
 		double entropia = 0.0;
-		double[] c = new double[6];
+		int[] c = new int[6];
 		ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
 		inicializarcubomatriz(cubomatriz, estado);
 		Iterator<String[][]> iter = cubomatriz.iterator();
 		double N = (double)Math.sqrt(estado.length()/6);
-		double resultado = 0.0;
 		
 		while(iter.hasNext()) {
-			
-			entropia = 0.0;
 		
-			c = new double[6];
+			c = new int[6];
 			
 			String[][] cara = iter.next();
 		
@@ -33,18 +30,21 @@ public class OperacionesCubo {
 				
 			
 			}
-			double aux = c[0];
-			for(int color=0; color<c.length; color++) {
-				if(c[color]>=aux) {
-					entropia = 0.0;
-					aux = c[color];
-					entropia = entropia + GenerarLog(c[color]/(N*N), 6);
-				}
-			}
-			resultado = resultado + (entropia*-1);
+			
+			entropia = entropia + calcularDesordenCara(c, N);
 		}
-		return resultado;
+		return entropia;
 
+	}
+	
+	public static double calcularDesordenCara(int[] c, double N) {
+		double entropia = 0.0;
+		for(int i=0; i<c.length; i++) {
+			if(c[i]>0) {
+				entropia = entropia + c[i]/(N*N)*GenerarLog(c[i]/(N*N), 6);
+			}
+		}
+		return entropia*-1;
 	}
 	
 	public static double GenerarLog(double argumento, int base) {
@@ -54,7 +54,6 @@ public class OperacionesCubo {
 		logbase10 = Math.log(argumento);
 		log = Math.log(base);
 		double result = logbase10/log;
-	
 
 		return result;
 		
