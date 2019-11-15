@@ -1,24 +1,14 @@
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.apache.commons.codec.digest.DigestUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.xml.sax.SAXException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Random;
 
 public class principal {
-
+	
+	public static int idnodos = 0;
+	
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		
@@ -26,126 +16,167 @@ public class principal {
 		comprobacionEjemplo();
 		//Comprueba que no haya fallos en movimientos de tarea2
 		comprobacionEjemplo2();
-		
 
 		EspacioEstados prob = new EspacioEstados("/Cubos/cube.json"); 
 		
 		ArrayList<NodoArbol> resultado = new ArrayList<NodoArbol>();
 		resultado = new ArrayList<NodoArbol>();
 		
-		resultado = Busqueda(prob, "estrella", 6);
+		boolean poda = true;
+		
+		idnodos = 0;
+		resultado = crearSolucion(Busqueda(prob, "estrella", 6, poda));
 		imprimirSolucion(resultado, "estrella");		
 		
 		resultado = new ArrayList<NodoArbol>();
-		
-		resultado = Busqueda(prob, "anchura", 6);
+
+		idnodos = 0;
+		resultado = crearSolucion(Busqueda(prob, "anchura", 6, poda));
 		imprimirSolucion(resultado, "anchura");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
-	  	resultado = Busqueda(prob, "profundidad", 6);
+		idnodos = 0;
+	  	resultado = crearSolucion(Busqueda(prob, "profundidad", 6, poda));
 		imprimirSolucion(resultado, "profundidad");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
-	  	resultado = Busqueda(prob, "voraz", 6);
+		idnodos = 0;
+		resultado = crearSolucion(Busqueda(prob, "voraz", 6, poda));
 		imprimirSolucion(resultado, "voraz");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
-	  	resultado = Busqueda(prob, "coste_uniforme", 6);
+		idnodos = 0;
+	  	resultado = crearSolucion(Busqueda(prob, "coste_uniforme", 6, poda));
 		imprimirSolucion(resultado, "coste_uniforme");
 		
-		/*
+		
 		EspacioEstados prob2 = new EspacioEstados("/Cubos/cube4.json"); 
 		
 		resultado = new ArrayList<NodoArbol>();
 		
-		resultado = Busqueda(prob2, "estrella", 6);
+		idnodos = 0;
+		resultado = crearSolucion(Busqueda(prob2, "estrella", 7, poda));
 		imprimirSolucion(resultado, "estrella");	
 		
 		resultado = new ArrayList<NodoArbol>();
 		
-	  	resultado = Busqueda(prob2, "voraz", 6);
-		imprimirSolucion(resultado, "voraz");*/
+		idnodos = 0;
+	  	resultado = crearSolucion(Busqueda(prob2, "voraz", 7, poda));
+		imprimirSolucion(resultado, "voraz");
 		
 		long endTime = System.currentTimeMillis();
 		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
 
 	}
 	
-	public static ArrayList<NodoArbol> Busqueda(EspacioEstados prob, String estrategia, int limiteProfundidad) {	
-		
+	public static ArrayList<NodoArbol> crearSolucion(NodoArbol a){
 		ArrayList<NodoArbol> solucion = new ArrayList<NodoArbol>();
-		ArrayList<String> visitados = new ArrayList<String>();
-		ArrayList<ArrayList<String>> v = new ArrayList<ArrayList<String>>();
-		for(int i=0; i<limiteProfundidad; i++) {
-				ArrayList<String> v1 = new ArrayList<String>();
-				v.add(i, v1);
+		
+		while(a.getPadre() != null) {
+			
+			solucion.add(0, a);
+			a = a.getPadre();
+	
+		}
+		solucion.add(0, a);
+		
+		return solucion;
+	}
+	
+	public static NodoArbol crearPadre(String estrategia, String estado) {
+		double v = 0.0;
+		double h = OperacionesCubo.calculoDesorden(estado);
+		if(estrategia.equals("estrella") || estrategia.equals("voraz")) {
+			v = OperacionesCubo.calculoDesorden(estado);
+		}else if(estrategia.equals("profundidad")) {
+			v = 1.0;
+		}
+		NodoArbol n = new NodoArbol(estado, h, v, 0);
+		return n;
+	}
+	
+	public static void expandirNodo(EspacioEstados prob, Frontera f, NodoArbol a, String estrategia, int limiteProfundidad) {
+		ArrayList<String[]> ListaSucesores = prob.Sucesores(a.getEstado());
+		ArrayList<NodoArbol> ListaNodos = ListaNodos(ListaSucesores, a, estrategia, limiteProfundidad);
+		Iterator<NodoArbol> it = ListaNodos.iterator();
+		while(it.hasNext()) {
+			NodoArbol S = it.next();
+			S.setid(idnodos);
+			f.insertar(S);
+			idnodos++;
+		}
+		
+	}
+	
+	public static void inicializarVisitados(ArrayList<ArrayList<String>> visitados, int limiteProfundidad) {
+		for(int i=0; i<=limiteProfundidad; i++) {
+			ArrayList<String> V = new ArrayList<String>();
+			visitados.add(V);
+		}
+	}
+	
+	public static boolean visitadoProfundidadInferior(ArrayList<ArrayList<String>> visitados, int prof, String md5) {
+		boolean res = false;
+		for(int i=0; i<=prof; i++) {
+			if(visitados.get(i).contains(md5)) {
+				res = true;
+			}
+		}
+		return res;
+	}
+	
+	public static NodoArbol Busqueda(EspacioEstados prob, String estrategia, int limiteProfundidad, boolean poda) {	
+		
+		NodoArbol solucion = null;
+		ArrayList<ArrayList<String>> visitados = new ArrayList<ArrayList<String>>();
+		if(poda) {
+			inicializarVisitados(visitados, limiteProfundidad);
 		}
 		Frontera f = new Frontera();
-		int n = 0;
-		int d2 = 0;
-		
 		boolean sol = false;
-		
 		
 		try {
 			
 			String cubo = LecturaJSON.leer(prob.getFile());
-			int N = (int) Math.sqrt(cubo.length()/6);
-			NodoArbol padre = null;
-			double dou = 0.0;
-			if(estrategia.equals("estrella")) {
-				dou = OperacionesCubo.calculoDesorden(cubo);
-			}else if(estrategia.equals("profundidad")) {
-				dou = 1.0;
-			}else if(estrategia.equals("voraz")) {
-				dou = OperacionesCubo.calculoDesorden(cubo);
-			}
-			Double he = OperacionesCubo.calculoDesorden(cubo);
-			int h = he.intValue();
-			padre = new NodoArbol(cubo, h, dou, 0);
-			
-			
+	
+			NodoArbol padre = crearPadre(estrategia, cubo);
+	
 			f.insertar(padre); // La frontera inicial es el cubo del que partimos
+			idnodos++;
 			
-			while (sol == false && !f.estavacia()) {
-				
-				NodoArbol a = f.getNodos().remove();
-				
-				if(EsObjetivo(a.getEstado())) {
+			while (sol == false) {
+	
+				if(!f.estavacia()) {
 					
-					visitados.add(DigestUtils.md5Hex(a.getEstado()));
+					NodoArbol a = f.getNodos().poll();
 					
-					while(a.getPadre() != null) {
+					if(EsObjetivo(a.getEstado())) {
 						
-						solucion.add(0, a);
-						a = a.getPadre();
-				
-					}
-					solucion.add(0, a);
-					sol = true;
-					break;
-					
-				}else{
-					
-					
-					if(a.getd()<limiteProfundidad) {
-						v.get(a.getd()).add(DigestUtils.md5Hex(a.getEstado()));
+						solucion = a;
+						sol = true;
 						
-						ArrayList<String[]> sucesores = prob.Sucesores(a.getEstado());
-						ArrayList<NodoArbol> ListaNodos = ListaNodos(limiteProfundidad, v, visitados, sucesores, a, estrategia);
-						for(int i=0; i<ListaNodos.size(); i++) {
-							NodoArbol s = ListaNodos.get(i);
-							n++;
-							s.setid(n);
-							f.insertar(s);
+					}	
+					
+					String md5 = DigestUtils.md5Hex(a.getEstado());
+						
+					if(poda) {
+						if(!visitadoProfundidadInferior(visitados, a.getd(), md5)) {
+						
+							visitados.get(a.getd()).add(md5);	
+							expandirNodo(prob, f, a, estrategia, limiteProfundidad);
+						
 						}
+					}else {
+						expandirNodo(prob, f, a, estrategia, limiteProfundidad);
 					}
-				}	
+				}
+				else {
+					sol = true;
+				}
 			}
-			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -181,9 +212,9 @@ public class principal {
 				NodoArbol a = iter.next();
 				String md5 = DigestUtils.md5Hex(a.getEstado());
 				if(a.getPadre() == null) {
-					System.out.printf("["+a.getid()+"][None]"+md5+",c="+a.getd()+",p="+a.getd()+",h="+a.geth()+",f=%.2f\n", a.getf());
+					System.out.printf("["+a.getid()+"][None]"+md5+",c="+a.getd()+",p="+a.getd()+",h=%.2f,f=%.2f\n", a.geth(), a.getf());
 				}else {
-					System.out.printf("["+a.getid()+"]["+a.getAccion()+"]"+md5+",c="+a.getd()+",p="+a.getd()+",h="+a.geth()+",f=%.2f\n", a.getf());
+					System.out.printf("["+a.getid()+"]["+a.getAccion()+"]"+md5+",c="+a.getd()+",p="+a.getd()+",h=%.2f,f=%.2f\n", a.geth(), a.getf());
 				}
 			}
 			
@@ -300,60 +331,42 @@ public class principal {
 		
 	}
 	
-	public static ArrayList<NodoArbol> ListaNodos(int limite, ArrayList<ArrayList<String>> v, ArrayList<String> visitados, ArrayList<String[]> ListaSucesores, NodoArbol nodo_actual, String estrategia){
+	public static ArrayList<NodoArbol> ListaNodos(ArrayList<String[]> ListaSucesores, NodoArbol nodo_actual, String estrategia, int limiteProfundidad){
 		
 		ArrayList<NodoArbol> ListaNodos = new ArrayList<NodoArbol>();
-		Random rd = new Random();
-		String cubo = ListaSucesores.get(0)[0];
-		int N = (int) Math.sqrt(cubo.length()/6);
-		double f = 0;
-		
-		visitados.clear();
-		if(nodo_actual.getd()+1 >= v.size()) {
-			for(int i=0; i<=nodo_actual.getd(); i++) {
-				visitados.addAll(v.get(i));
-			}
-		}else {
-			for(int i=0; i<=nodo_actual.getd()+1; i++) {
-				visitados.addAll(v.get(i));
-			}
-		}
-		
-		
-		for(int i=0; i<ListaSucesores.size(); i++) {
-			cubo = ListaSucesores.get(i)[0];
-			String[] estado_sucesor = ListaSucesores.get(i);
-			double aleatorio = rd.nextDouble();
-				
-			if(estrategia.equals("anchura") || estrategia.equals("coste_uniforme")) {
+		if((nodo_actual.getd()+1)<=limiteProfundidad) {
+			double f = 0.0;
+			for(int i=0; i<ListaSucesores.size(); i++) {
+				String[] estado_sucesor = ListaSucesores.get(i);
 					
-				f = nodo_actual.getd()+1;
-					
-			}else if(estrategia.equals("profundidad")) {
+				if(estrategia.equals("anchura") || estrategia.equals("coste_uniforme")) {
+						
+					f = nodo_actual.getd()+1;
+						
+				}else if(estrategia.equals("profundidad")) {
 
-				f = 1.0/(nodo_actual.getd()+2);
+					f = 1.0/(nodo_actual.getd()+2);
+					
+				}else if(estrategia.equals("voraz")) {
+					
+					f = OperacionesCubo.calculoDesorden(estado_sucesor[0]);
 				
-			}else if(estrategia.equals("voraz")) {
+				}else if(estrategia.equals("estrella")) {
+					
+					f = (nodo_actual.getd()+1) + OperacionesCubo.calculoDesorden(estado_sucesor[0]);
+				}
+					
+				double h = OperacionesCubo.calculoDesorden(estado_sucesor[0]);
 				
-				f = OperacionesCubo.calculoDesorden(estado_sucesor[0]);
-			
-			}else if(estrategia.equals("estrella")) {
+				if((nodo_actual.getd()+1)<=limiteProfundidad) {
+					NodoArbol n = new NodoArbol(nodo_actual, estado_sucesor[0], estado_sucesor[1], h, f, nodo_actual.getd()+1);
+					ListaNodos.add(n);
+				}
 				
-				f = (nodo_actual.getd()+1) + OperacionesCubo.calculoDesorden(estado_sucesor[0]);
+				
 			}
-				
-			Double he = OperacionesCubo.calculoDesorden(estado_sucesor[0]);
-			int h = he.intValue();
-				
-			NodoArbol n = new NodoArbol(nodo_actual, estado_sucesor[0], estado_sucesor[1], h, f, nodo_actual.getd()+1);
-			String md5 = DigestUtils.md5Hex(n.getEstado());
-			boolean visitado = visitados.contains(md5);
-			if(!visitado) {
-				ListaNodos.add(n);
-			}			
 		}
 		return ListaNodos;
-		
 	}
 	
 	
