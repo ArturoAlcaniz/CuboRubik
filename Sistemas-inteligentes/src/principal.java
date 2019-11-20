@@ -4,6 +4,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.json.simple.parser.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 
 public class principal {
 	
@@ -15,7 +17,7 @@ public class principal {
 		//Comprueba que no haya fallos en los movimientos (tarea1)
 		comprobacionEjemplo();
 		//Comprueba que no haya fallos en movimientos de tarea2
-		comprobacionEjemplo2();
+		//comprobacionEjemplo2();
 
 		EspacioEstados prob = new EspacioEstados("/Cubos/cube.json"); 
 		
@@ -55,18 +57,6 @@ public class principal {
 		
 		EspacioEstados prob2 = new EspacioEstados("/Cubos/cube4.json"); 
 		
-		resultado = new ArrayList<NodoArbol>();
-		
-		idnodos = 0;
-		resultado = crearSolucion(Busqueda(prob2, "estrella", 7, poda));
-		imprimirSolucion(resultado, "estrella");	
-		
-		resultado = new ArrayList<NodoArbol>();
-		
-		idnodos = 0;
-	  	resultado = crearSolucion(Busqueda(prob2, "voraz", 7, poda));
-		imprimirSolucion(resultado, "voraz");
-		
 		long endTime = System.currentTimeMillis();
 		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
 
@@ -101,28 +91,26 @@ public class principal {
 	public static void expandirNodo(EspacioEstados prob, Frontera f, NodoArbol a, String estrategia, int limiteProfundidad) {
 		ArrayList<String[]> ListaSucesores = prob.Sucesores(a.getEstado());
 		ArrayList<NodoArbol> ListaNodos = ListaNodos(ListaSucesores, a, estrategia, limiteProfundidad);
-		Iterator<NodoArbol> it = ListaNodos.iterator();
-		while(it.hasNext()) {
-			NodoArbol S = it.next();
-			S.setid(idnodos);
-			f.insertar(S);
-			idnodos++;
-		}
-		
+		f.getNodos().addAll(ListaNodos);
 	}
 	
-	public static void inicializarVisitados(ArrayList<ArrayList<String>> visitados, int limiteProfundidad) {
-		for(int i=0; i<=limiteProfundidad; i++) {
-			ArrayList<String> V = new ArrayList<String>();
-			visitados.add(V);
-		}
-	}
-	
-	public static boolean visitadoProfundidadInferior(ArrayList<ArrayList<String>> visitados, int prof, String md5) {
+	public static boolean visitadoCosteInferior(ArrayList<String> visitados, ArrayList<Integer> visitadosCoste, int coste, String md5) {
 		boolean res = false;
-		for(int i=0; i<=prof; i++) {
-			if(visitados.get(i).contains(md5)) {
+		
+		if(visitados.contains(md5)) {
+			
+			int i = visitados.indexOf(md5);
+			int costevisitado = visitadosCoste.get(i);
+			
+			if(costevisitado<=coste) {
+				
 				res = true;
+				
+			}else {
+				
+				visitados.remove(i);
+				visitadosCoste.remove(i);
+				
 			}
 		}
 		return res;
@@ -131,10 +119,8 @@ public class principal {
 	public static NodoArbol Busqueda(EspacioEstados prob, String estrategia, int limiteProfundidad, boolean poda) {	
 		
 		NodoArbol solucion = null;
-		ArrayList<ArrayList<String>> visitados = new ArrayList<ArrayList<String>>();
-		if(poda) {
-			inicializarVisitados(visitados, limiteProfundidad);
-		}
+		ArrayList<String> visitados = new ArrayList<String>();
+		ArrayList<Integer> visitadosCoste = new ArrayList<Integer>();
 		Frontera f = new Frontera();
 		boolean sol = false;
 		
@@ -153,7 +139,7 @@ public class principal {
 					
 					NodoArbol a = f.getNodos().poll();
 					
-					if(EsObjetivo(a.getEstado())) {
+					if(EsObjetivo(a)) {
 						
 						solucion = a;
 						sol = true;
@@ -163,9 +149,10 @@ public class principal {
 					String md5 = DigestUtils.md5Hex(a.getEstado());
 						
 					if(poda) {
-						if(!visitadoProfundidadInferior(visitados, a.getd(), md5)) {
+						if(!visitadoCosteInferior(visitados, visitadosCoste, a.getcoste(), md5)) {
 						
-							visitados.get(a.getd()).add(md5);	
+							visitados.add(md5);	
+							visitadosCoste.add(a.getcoste());
 							expandirNodo(prob, f, a, estrategia, limiteProfundidad);
 						
 						}
@@ -211,10 +198,15 @@ public class principal {
 			while(iter.hasNext()) {
 				NodoArbol a = iter.next();
 				String md5 = DigestUtils.md5Hex(a.getEstado());
+				
+				DecimalFormatSymbols formatosimbolos = new DecimalFormatSymbols();
+				formatosimbolos.setDecimalSeparator('.');
+				DecimalFormat formato = new DecimalFormat("#.##", formatosimbolos);
+				
 				if(a.getPadre() == null) {
-					System.out.printf("["+a.getid()+"][None]"+md5+",c="+a.getd()+",p="+a.getd()+",h=%.2f,f=%.2f\n", a.geth(), a.getf());
+					System.out.printf("["+a.getid()+"][None]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",f="+formato.format(a.getf())+"\n");
 				}else {
-					System.out.printf("["+a.getid()+"]["+a.getAccion()+"]"+md5+",c="+a.getd()+",p="+a.getd()+",h=%.2f,f=%.2f\n", a.geth(), a.getf());
+					System.out.printf("["+a.getid()+"]["+a.getAccion()+"]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",f="+formato.format(a.getf())+"\n");
 				}
 			}
 			
@@ -357,10 +349,11 @@ public class principal {
 				}
 					
 				double h = OperacionesCubo.calculoDesorden(estado_sucesor[0]);
-				
-				NodoArbol n = new NodoArbol(nodo_actual, estado_sucesor[0], estado_sucesor[1], h, f, nodo_actual.getd()+1);
+
+				NodoArbol n = new NodoArbol(nodo_actual, estado_sucesor[0], estado_sucesor[1], h, f, nodo_actual.getd()+1, (nodo_actual.getcoste()+1));
+				n.setid(idnodos);
 				ListaNodos.add(n);
-				
+				idnodos++;
 				
 			}
 		}
@@ -369,44 +362,13 @@ public class principal {
 	
 	
 	
-	public static boolean EsObjetivo(String estado) {
+	public static boolean EsObjetivo(NodoArbol a) {
 		
-		ArrayList<String[][]> cubo = new ArrayList<String[][]>();
-		OperacionesCubo.inicializarcubomatriz(cubo, estado);
-		
-		boolean comprobar = true;
-		int ca = 0;
-		int i = 0;
-		int j = 0;
-		
-		while(comprobar == true && ca<6) {
-			
-			i = 0;
-			
-			String[][] cara = cubo.get(ca);
-			
-			String color = cara[0][0];
-			
-			while(comprobar == true && i<cara.length) {
-				
-				j=0;
-				
-				while(comprobar == true && j<cara[i].length) {
-			
-					if(Integer.parseInt(cara[i][j]) != Integer.parseInt(color)) {
-						comprobar = false;
-						
-					}
-					
-					j++;
-				}
-				i++;
-			}
-			ca++;
-		}
-		
-		return comprobar;
-		
+		if(a.geth() == 0) {
+			return true;
+		}else {
+			return false;
+		}		
 	}
 	
 	
@@ -418,7 +380,6 @@ public class principal {
 			return false;
 		}
 	}
-	
 	
 
 }
