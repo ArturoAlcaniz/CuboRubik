@@ -10,7 +10,8 @@ public class NodoArbol implements Comparable<NodoArbol>{
 	int d;
 	int coste;
 	
-	public NodoArbol(NodoArbol padre, String estado, String accion, double h, double f, int d, int coste) {
+	public NodoArbol(int id, NodoArbol padre, String estado, String accion, double h, double f, int d, int coste) {
+		this.id = id;
 		this.padre = padre;
 		this.estado = estado;
 		this.accion = accion;
@@ -18,14 +19,6 @@ public class NodoArbol implements Comparable<NodoArbol>{
 		this.f = f;
 		this.d = d;
 		this.coste = coste;
-	}
-	
-	public NodoArbol(String estado, double h, double f, int d) {
-		this.estado = estado;
-		this.coste = 0;
-		this.h = h;
-		this.f = f;
-		this.d = d;
 	}
 
 	public double geth() {
@@ -111,7 +104,4 @@ public class NodoArbol implements Comparable<NodoArbol>{
 		}
 
 	}
-
-
-
 }
