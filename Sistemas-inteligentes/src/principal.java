@@ -27,35 +27,33 @@ public class principal {
 		boolean poda = true;
 		
 		idnodos = 0;
-		resultado = crearSolucion(Busqueda(prob, "estrella", 6, poda));
+		resultado = crearSolucion(Busqueda(prob, "estrella", 6, poda, 1));
 		imprimirSolucion(resultado, "estrella");		
 		
 		resultado = new ArrayList<NodoArbol>();
 
 		idnodos = 0;
-		resultado = crearSolucion(Busqueda(prob, "anchura", 6, poda));
+		resultado = crearSolucion(Busqueda(prob, "anchura", 6, poda, 1));
 		imprimirSolucion(resultado, "anchura");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
 		idnodos = 0;
-	  	resultado = crearSolucion(Busqueda(prob, "profundidad", 6, poda));
+	  	resultado = crearSolucion(Busqueda(prob, "profundidad", 6, poda, 1));
 		imprimirSolucion(resultado, "profundidad");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
 		idnodos = 0;
-		resultado = crearSolucion(Busqueda(prob, "voraz", 6, poda));
+		resultado = crearSolucion(Busqueda(prob, "voraz", 6, poda, 1));
 		imprimirSolucion(resultado, "voraz");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
 		idnodos = 0;
-	  	resultado = crearSolucion(Busqueda(prob, "coste_uniforme", 6, poda));
+	  	resultado = crearSolucion(Busqueda(prob, "coste_uniforme", 6, poda, 1));
 		imprimirSolucion(resultado, "coste_uniforme");
 		
-		
-		EspacioEstados prob2 = new EspacioEstados("/Cubos/cube4.json"); 
 		
 		long endTime = System.currentTimeMillis();
 		System.out.println("\nTiempo transcurrido: "+ (endTime-startTime)/1000.0 +"s");
@@ -76,30 +74,13 @@ public class principal {
 		return solucion;
 	}
 	
-	public static NodoArbol crearPadre(String estrategia, String estado) {
-		double v = 0.0;
-		double h = OperacionesCubo.calculoDesorden(estado);
-		if(estrategia.equals("estrella") || estrategia.equals("voraz")) {
-			v = OperacionesCubo.calculoDesorden(estado);
-		}else if(estrategia.equals("profundidad")) {
-			v = 1.0;
-		}
-		NodoArbol n = new NodoArbol(estado, h, v, 0);
-		return n;
-	}
-	
-	public static void expandirNodo(EspacioEstados prob, Frontera f, NodoArbol a, String estrategia, int limiteProfundidad) {
-		ArrayList<String[]> ListaSucesores = prob.Sucesores(a.getEstado());
-		ArrayList<NodoArbol> ListaNodos = ListaNodos(ListaSucesores, a, estrategia, limiteProfundidad);
-		f.getNodos().addAll(ListaNodos);
-	}
-	
 	public static boolean visitadoCosteInferior(ArrayList<String> visitados, ArrayList<Integer> visitadosCoste, int coste, String md5) {
 		boolean res = false;
 		
-		if(visitados.contains(md5)) {
+		int i = visitados.indexOf(md5);
+		
+		if(i != -1) {
 			
-			int i = visitados.indexOf(md5);
 			int costevisitado = visitadosCoste.get(i);
 			
 			if(costevisitado<=coste) {
@@ -110,68 +91,79 @@ public class principal {
 				
 				visitados.remove(i);
 				visitadosCoste.remove(i);
+				visitados.add(i, md5);
+				visitadosCoste.add(i, coste);
 				
 			}
+		}else {
+			i = visitados.size();
+			visitados.add(i, md5);
+			visitadosCoste.add(i, coste);
 		}
 		return res;
 	}
 	
-	public static NodoArbol Busqueda(EspacioEstados prob, String estrategia, int limiteProfundidad, boolean poda) {	
+	public static NodoArbol Busqueda(EspacioEstados prob, String estrategia, int limite, boolean poda, int inc_prof) {
+		NodoArbol solucion = null;
+		int prof_actual = inc_prof;
+		while(solucion == null && prof_actual <= limite) {
+			solucion = Busqueda_acotada(prob, estrategia, prof_actual, poda);
+			prof_actual = prof_actual + inc_prof;
+		}
+		return solucion;
+	}
+	
+	public static NodoArbol Busqueda_acotada(EspacioEstados prob, String estrategia, int limiteProfundidad, boolean poda) {	
 		
 		NodoArbol solucion = null;
+		
+		idnodos = 0;
+		
 		ArrayList<String> visitados = new ArrayList<String>();
 		ArrayList<Integer> visitadosCoste = new ArrayList<Integer>();
+		
 		Frontera f = new Frontera();
 		boolean sol = false;
 		
-		try {
-			
-			String cubo = LecturaJSON.leer(prob.getFile());
-	
-			NodoArbol padre = crearPadre(estrategia, cubo);
-	
-			f.insertar(padre); // La frontera inicial es el cubo del que partimos
-			idnodos++;
-			
-			while (sol == false) {
-	
-				if(!f.estavacia()) {
+		NodoArbol padre = new NodoArbol(idnodos++, null, prob.getEstado_inicial(), null, OperacionesCubo.calculoDesorden(prob.getEstado_inicial()), 0, 0, 0);
+
+		f.insertar(padre); // La frontera inicial es el cubo del que partimos
+		
+		while (sol == false) {
+
+			if(!f.estavacia()) {
+				
+				NodoArbol a = f.getNodos().remove();
+				
+				if(EsObjetivo(a)) {
 					
-					NodoArbol a = f.getNodos().poll();
-					
-					if(EsObjetivo(a)) {
-						
-						solucion = a;
-						sol = true;
-						
-					}	
-					
-					String md5 = DigestUtils.md5Hex(a.getEstado());
-						
-					if(poda) {
-						if(!visitadoCosteInferior(visitados, visitadosCoste, a.getcoste(), md5)) {
-						
-							visitados.add(md5);	
-							visitadosCoste.add(a.getcoste());
-							expandirNodo(prob, f, a, estrategia, limiteProfundidad);
-						
-						}
-					}else {
-						expandirNodo(prob, f, a, estrategia, limiteProfundidad);
-					}
-				}
-				else {
+					solucion = a;
 					sol = true;
+					
+				}	
+				
+				String md5 = DigestUtils.md5Hex(a.getEstado());
+					
+				if(poda) {
+					if(!visitadoCosteInferior(visitados, visitadosCoste, a.getcoste(), md5)) {
+					
+						ArrayList<String[]> ListaSucesores = prob.Sucesores(a.getEstado());
+						ArrayList<NodoArbol> ListaNodos = ListaNodos(ListaSucesores, a, estrategia, limiteProfundidad);
+						f.getNodos().addAll(ListaNodos);
+					
+					}
+				}else {
+					
+					ArrayList<String[]> ListaSucesores = prob.Sucesores(a.getEstado());
+					ArrayList<NodoArbol> ListaNodos = ListaNodos(ListaSucesores, a, estrategia, limiteProfundidad);
+					f.getNodos().addAll(ListaNodos);
+				
 				}
 			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ParseException e) {
-			e.printStackTrace();
+			else {
+				sol = true;
+			}
 		}
-		
 		return solucion;
 		
 	}
@@ -326,34 +318,42 @@ public class principal {
 	public static ArrayList<NodoArbol> ListaNodos(ArrayList<String[]> ListaSucesores, NodoArbol nodo_actual, String estrategia, int limiteProfundidad){
 		
 		ArrayList<NodoArbol> ListaNodos = new ArrayList<NodoArbol>();
+		
 		if((nodo_actual.getd()+1)<=limiteProfundidad) {
+			
 			double f = 0.0;
+			
 			for(int i=0; i<ListaSucesores.size(); i++) {
+				
 				String[] estado_sucesor = ListaSucesores.get(i);
+				
+				double h = OperacionesCubo.calculoDesorden(estado_sucesor[0]);	
+				int d = nodo_actual.getd()+1;
+				int c = nodo_actual.getcoste()+1;
+				
+				if(estrategia.equals("anchura")){ 
+						
+					f = d;
+						
+				}else if(estrategia.equals("coste_uniforme")) {
 					
-				if(estrategia.equals("anchura") || estrategia.equals("coste_uniforme")) {
-						
-					f = nodo_actual.getd()+1;
-						
+					f = c;
+					
 				}else if(estrategia.equals("profundidad")) {
 
-					f = 1.0/(nodo_actual.getd()+2);
+					f = 1.0/d+1;
 					
 				}else if(estrategia.equals("voraz")) {
 					
-					f = OperacionesCubo.calculoDesorden(estado_sucesor[0]);
+					f = h;
 				
 				}else if(estrategia.equals("estrella")) {
 					
-					f = (nodo_actual.getd()+1) + OperacionesCubo.calculoDesorden(estado_sucesor[0]);
+					f = d + h;
 				}
 					
-				double h = OperacionesCubo.calculoDesorden(estado_sucesor[0]);
-
-				NodoArbol n = new NodoArbol(nodo_actual, estado_sucesor[0], estado_sucesor[1], h, f, nodo_actual.getd()+1, (nodo_actual.getcoste()+1));
-				n.setid(idnodos);
+				NodoArbol n = new NodoArbol(idnodos++, nodo_actual, estado_sucesor[0], estado_sucesor[1], h, f, d, c);
 				ListaNodos.add(n);
-				idnodos++;
 				
 			}
 		}
