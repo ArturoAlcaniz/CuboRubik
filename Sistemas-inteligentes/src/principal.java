@@ -26,32 +26,32 @@ public class principal {
 		
 		boolean poda = true;
 		
-		idnodos = 0;
-		resultado = crearSolucion(Busqueda(prob, "estrella", 6, poda, 1));
+		resultado = crearSolucion(Buscar_Solucion(prob, "estrella", 6, poda, 1));
 		imprimirSolucion(resultado, "estrella");		
 		
 		resultado = new ArrayList<NodoArbol>();
 
-		idnodos = 0;
-		resultado = crearSolucion(Busqueda(prob, "anchura", 6, poda, 1));
+		resultado = crearSolucion(Buscar_Solucion(prob, "anchura", 6, poda, 1));
 		imprimirSolucion(resultado, "anchura");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
-		idnodos = 0;
-	  	resultado = crearSolucion(Busqueda(prob, "profundidad", 6, poda, 1));
-		imprimirSolucion(resultado, "profundidad");
+	  	resultado = crearSolucion(Buscar_Solucion(prob, "profundidad_iterativa", 6, poda, 1));
+		imprimirSolucion(resultado, "profundidad_iterativa");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
-		idnodos = 0;
-		resultado = crearSolucion(Busqueda(prob, "voraz", 6, poda, 1));
+	  	resultado = crearSolucion(Buscar_Solucion(prob, "profundidad_acotada", 6, poda, 1));
+		imprimirSolucion(resultado, "profundidad_acotada");
+		
+		resultado = new ArrayList<NodoArbol>();
+		
+		resultado = crearSolucion(Buscar_Solucion(prob, "voraz", 6, poda, 1));
 		imprimirSolucion(resultado, "voraz");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
-		idnodos = 0;
-	  	resultado = crearSolucion(Busqueda(prob, "coste_uniforme", 6, poda, 1));
+	  	resultado = crearSolucion(Buscar_Solucion(prob, "coste_uniforme", 6, poda, 1));
 		imprimirSolucion(resultado, "coste_uniforme");
 		
 		
@@ -103,17 +103,26 @@ public class principal {
 		return res;
 	}
 	
-	public static NodoArbol Busqueda(EspacioEstados prob, String estrategia, int limite, boolean poda, int inc_prof) {
+	public static NodoArbol Buscar_Solucion(EspacioEstados prob, String estrategia, int limite, boolean poda, int inc_prof) {
+		if(estrategia.equals("profundidad_iterativa")) {
+			return Busqueda_iterativa(prob, estrategia, limite, poda, inc_prof);
+				
+		}else {
+			return Busqueda(prob, estrategia, limite, poda);
+		}
+	}
+	
+	public static NodoArbol Busqueda_iterativa(EspacioEstados prob, String estrategia, int limite, boolean poda, int inc_prof) {
 		NodoArbol solucion = null;
 		int prof_actual = inc_prof;
 		while(solucion == null && prof_actual <= limite) {
-			solucion = Busqueda_acotada(prob, estrategia, prof_actual, poda);
+			solucion = Busqueda(prob, estrategia, prof_actual, poda);
 			prof_actual = prof_actual + inc_prof;
 		}
 		return solucion;
 	}
 	
-	public static NodoArbol Busqueda_acotada(EspacioEstados prob, String estrategia, int limiteProfundidad, boolean poda) {	
+	public static NodoArbol Busqueda(EspacioEstados prob, String estrategia, int limiteProfundidad, boolean poda) {	
 		
 		NodoArbol solucion = null;
 		
@@ -174,8 +183,10 @@ public class principal {
 		
 		if(estrategia.equals("anchura")) {
 			System.out.println("Breadth (Anchura)");
-		}else if(estrategia.equals("profundidad")){
-			System.out.println("Depth (Profundidad)");
+		}else if(estrategia.equals("profundidad_acotada")){
+			System.out.println("Depth (Profundidad acotada)");
+		}else if(estrategia.equals("profundidad_iterativa")) {
+			System.out.println("Depth (profundidad iterativa)");
 		}else if(estrategia.equals("coste_uniforme")) {
 			System.out.println("Uniform (Costo Uniforme)");
 		}else if(estrategia.equals("estrella")) {
@@ -339,7 +350,7 @@ public class principal {
 					
 					f = c;
 					
-				}else if(estrategia.equals("profundidad")) {
+				}else if(estrategia.equals("profundidad_acotada") || estrategia.equals("profundidad_iterativa")) {
 
 					f = 1.0/d+1;
 					
