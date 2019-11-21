@@ -1,14 +1,26 @@
-
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
+
+import org.json.simple.parser.ParseException;
 
 
 public class EspacioEstados {
 	
 	String file = new String();
+	String estado_inicial = new String();
 	
 	public EspacioEstados(String file) {
 		this.file = file;
+		try {
+			this.estado_inicial = LecturaJSON.leer(file);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public ArrayList<String[]> Sucesores(String cubo) {
@@ -37,6 +49,7 @@ public class EspacioEstados {
 			
 		}
 		for(int i = 0; i<N; i++) {
+			
 			ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
 			cubomatriz = OperacionesCubo.inicializarcubomatriz(cubomatriz, cubo);
 			OperacionesCubo.GirarDown(cubomatriz, i);
@@ -45,6 +58,7 @@ public class EspacioEstados {
 			
 		}
 		for(int i = 0; i<N; i++) {
+			
 			ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
 			cubomatriz = OperacionesCubo.inicializarcubomatriz(cubomatriz, cubo);
 			OperacionesCubo.GirarDown2(cubomatriz, i);
@@ -53,6 +67,7 @@ public class EspacioEstados {
 			
 		}
 		for(int i = 0; i<N; i++) {
+			
 			ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
 			cubomatriz = OperacionesCubo.inicializarcubomatriz(cubomatriz, cubo);
 			OperacionesCubo.GirarLeft(cubomatriz, i);
@@ -61,6 +76,7 @@ public class EspacioEstados {
 			
 		}
 		for(int i = 0; i<N; i++) {
+			
 			ArrayList<String[][]> cubomatriz = new ArrayList<String[][]>();
 			cubomatriz = OperacionesCubo.inicializarcubomatriz(cubomatriz, cubo);
 			OperacionesCubo.GirarLeft2(cubomatriz, i);
@@ -69,11 +85,7 @@ public class EspacioEstados {
 			
 				
 		}
-		/*Iterator<String[]> it = ListaSucesores.iterator();
-		while(it.hasNext()){
-			String[] n = it.next();
-			System.out.println(" "+n[0]+" "+n[2]);
-		*/
+		
 		return ListaSucesores;
 		
 	}
@@ -88,6 +100,16 @@ public class EspacioEstados {
 		
 		this.file = file;
 		
+	}
+	
+	public String getEstado_inicial() {
+		
+		return estado_inicial;
+		
+	}
+	
+	public void setEstado_inicial(String estado) {
+		this.estado_inicial = estado;
 	}
 	
 	
