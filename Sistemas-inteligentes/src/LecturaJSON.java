@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -44,12 +45,48 @@ public class LecturaJSON {
 	}
 	
 	public static boolean isNumeric(String cadena){
+	
 		try {
+			
 			Integer.parseInt(cadena);
 			return true;
+			
 		} catch (NumberFormatException nfe){
+			
 			return false;
+
 		}
 	}
+	
+	public static void escribir(String file, String texto) throws FileNotFoundException, IOException{
 
+		File f = new File(".");
+		
+		File directorio = new File(f.getCanonicalPath()+"/Soluciones/");
+		
+		if(!directorio.exists())
+			directorio.mkdir();
+		
+		File ff = new File(directorio.getCanonicalPath()+"/"+file);
+		
+		ff.createNewFile();
+		
+		FileWriter fw = new FileWriter(ff);
+		
+		fw.write(texto);
+		fw.close();
+		
+	}
+	
+	public static void borrar(String file) throws FileNotFoundException,IOException {
+		
+		File f = new File(".");
+		
+		File directorio = new File(f.getCanonicalPath()+"/Soluciones/");
+		
+		File ff = new File(directorio.getCanonicalPath()+"/"+file);
+		
+		if(ff.exists())
+			ff.delete();
+	}
 }
