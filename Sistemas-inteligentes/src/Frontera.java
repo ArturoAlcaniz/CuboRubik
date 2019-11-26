@@ -16,8 +16,8 @@ public class Frontera {
 	public PriorityQueue<NodoArbol> getNodos(){
 		return nodos;
 	}
-	public void eliminar() {
-		nodos.remove();
+	public NodoArbol eliminar() {
+		return nodos.remove();
 	}
 	
 	public boolean estavacia() {
