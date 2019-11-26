@@ -9,15 +9,13 @@ import java.text.DecimalFormatSymbols;
 
 public class principal {
 	
-	public static int idnodos = 0;
+	static int idnodos = 0;
 	
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		
 		//Comprueba que no haya fallos en los movimientos (tarea1)
 		comprobacionEjemplo();
-		//Comprueba que no haya fallos en movimientos de tarea2
-		//comprobacionEjemplo2();
 
 		EspacioEstados prob = new EspacioEstados("/Cubos/cube.json"); 
 		
@@ -74,32 +72,37 @@ public class principal {
 		return solucion;
 	}
 	
-	public static boolean visitadoCosteInferior(ArrayList<String> visitados, ArrayList<Integer> visitadosCoste, int coste, String md5) {
+	public static boolean visitadoCosteInferior(ArrayList<String> visitados, ArrayList<Double> visitadosCoste, NodoArbol a) {
 		boolean res = false;
 		
-		int i = visitados.indexOf(md5);
+		String md5 = DigestUtils.md5Hex(a.getEstado());
 		
+		double coste = a.getcoste();
+		
+		int i = visitados.indexOf(md5);
+	
 		if(i != -1) {
-			
-			int costevisitado = visitadosCoste.get(i);
-			
+		
+			double costevisitado = visitadosCoste.get(i);
+		
 			if(costevisitado<=coste) {
-				
+			
 				res = true;
-				
+			
 			}else {
-				
-				visitados.remove(i);
-				visitadosCoste.remove(i);
-				visitados.add(i, md5);
-				visitadosCoste.add(i, coste);
+			
+				visitadosCoste.set(i, coste);
 				
 			}
+			
 		}else {
+			
 			i = visitados.size();
 			visitados.add(i, md5);
 			visitadosCoste.add(i, coste);
+		
 		}
+		
 		return res;
 	}
 	
@@ -129,48 +132,52 @@ public class principal {
 		idnodos = 0;
 		
 		ArrayList<String> visitados = new ArrayList<String>();
-		ArrayList<Integer> visitadosCoste = new ArrayList<Integer>();
+		ArrayList<Double> visitadosCoste = new ArrayList<Double>();
 		
 		Frontera f = new Frontera();
-		boolean sol = false;
 		
 		NodoArbol padre = new NodoArbol(idnodos++, null, prob.getEstado_inicial(), null, OperacionesCubo.calculoDesorden(prob.getEstado_inicial()), 0, 0, 0);
-
-		f.insertar(padre); // La frontera inicial es el cubo del que partimos
+		padre.setf(CrearValor(estrategia, padre));
+		f.insertar(padre);
 		
-		while (sol == false) {
+		while (solucion == null) {
 
 			if(!f.estavacia()) {
 				
-				NodoArbol a = f.getNodos().remove();
+				NodoArbol a = f.eliminar();
 				
 				if(EsObjetivo(a)) {
 					
 					solucion = a;
-					sol = true;
 					
 				}	
 				
-				String md5 = DigestUtils.md5Hex(a.getEstado());
-					
-				if(poda) {
-					if(!visitadoCosteInferior(visitados, visitadosCoste, a.getcoste(), md5)) {
-					
-						ArrayList<String[]> ListaSucesores = prob.Sucesores(a.getEstado());
-						ArrayList<NodoArbol> ListaNodos = ListaNodos(ListaSucesores, a, estrategia, limiteProfundidad);
-						f.getNodos().addAll(ListaNodos);
-					
-					}
-				}else {
-					
-					ArrayList<String[]> ListaSucesores = prob.Sucesores(a.getEstado());
-					ArrayList<NodoArbol> ListaNodos = ListaNodos(ListaSucesores, a, estrategia, limiteProfundidad);
-					f.getNodos().addAll(ListaNodos);
+				ArrayList<String[]> ListaSucesores = prob.Sucesores(a.getEstado());
+				ArrayList<NodoArbol> ListaNodos = ListaNodos(ListaSucesores, a, estrategia, limiteProfundidad);
 				
+				Iterator<NodoArbol> it = ListaNodos.iterator();
+				
+				while(it.hasNext()) {
+
+					NodoArbol n = it.next();
+					
+					if(poda) {
+					
+						if(!visitadoCosteInferior(visitados, visitadosCoste, n)) {
+					
+							f.getNodos().add(n);
+					
+						}
+				
+					}else {
+					
+						f.getNodos().add(n);
+				
+					}
 				}
 			}
 			else {
-				sol = true;
+				break;
 			}
 		}
 		return solucion;
@@ -207,9 +214,9 @@ public class principal {
 				DecimalFormat formato = new DecimalFormat("#.##", formatosimbolos);
 				
 				if(a.getPadre() == null) {
-					System.out.printf("["+a.getid()+"][None]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",f="+formato.format(a.getf())+"\n");
+					System.out.printf("["+a.getid()+"][None]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",v="+formato.format(a.getf())+"\n");
 				}else {
-					System.out.printf("["+a.getid()+"]["+a.getAccion()+"]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",f="+formato.format(a.getf())+"\n");
+					System.out.printf("["+a.getid()+"]["+a.getAccion()+"]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",v="+formato.format(a.getf())+"\n");
 				}
 			}
 			
@@ -326,45 +333,52 @@ public class principal {
 		
 	}
 	
+	public static double CrearValor(String estrategia, NodoArbol a) {
+		double valor = 0.0;
+		
+		if(estrategia.equals("anchura")){ 
+			
+			valor = a.getd();
+				
+		}else if(estrategia.equals("coste_uniforme")) {
+			
+			valor = a.getcoste();
+			
+		}else if(estrategia.equals("profundidad_acotada") || estrategia.equals("profundidad_iterativa")) {
+
+			valor = 1.0/(a.getd()+1.0);
+			
+		}else if(estrategia.equals("voraz")) {
+			
+			valor = a.geth();
+		
+		}else if(estrategia.equals("estrella")) {
+			
+			valor = a.getd() + a.geth();
+		}
+		
+		return valor;
+	}
+	
 	public static ArrayList<NodoArbol> ListaNodos(ArrayList<String[]> ListaSucesores, NodoArbol nodo_actual, String estrategia, int limiteProfundidad){
 		
 		ArrayList<NodoArbol> ListaNodos = new ArrayList<NodoArbol>();
 		
 		if((nodo_actual.getd()+1)<=limiteProfundidad) {
 			
-			double f = 0.0;
 			
 			for(int i=0; i<ListaSucesores.size(); i++) {
 				
 				String[] estado_sucesor = ListaSucesores.get(i);
 				
 				double h = OperacionesCubo.calculoDesorden(estado_sucesor[0]);	
-				int d = nodo_actual.getd()+1;
-				int c = nodo_actual.getcoste()+1;
-				
-				if(estrategia.equals("anchura")){ 
-						
-					f = d;
-						
-				}else if(estrategia.equals("coste_uniforme")) {
+				double d = nodo_actual.getd()+1;
+				double c = nodo_actual.getcoste()+1;
 					
-					f = c;
-					
-				}else if(estrategia.equals("profundidad_acotada") || estrategia.equals("profundidad_iterativa")) {
-
-					f = 1.0/d+1;
-					
-				}else if(estrategia.equals("voraz")) {
-					
-					f = h;
-				
-				}else if(estrategia.equals("estrella")) {
-					
-					f = d + h;
-				}
-					
-				NodoArbol n = new NodoArbol(idnodos++, nodo_actual, estado_sucesor[0], estado_sucesor[1], h, f, d, c);
+				NodoArbol n = new NodoArbol(idnodos++, nodo_actual, estado_sucesor[0], estado_sucesor[1], h, 0, d, c);
+				n.setf(CrearValor(estrategia, n));
 				ListaNodos.add(n);
+
 				
 			}
 		}
