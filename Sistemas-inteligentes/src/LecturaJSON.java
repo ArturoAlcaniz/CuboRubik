@@ -69,8 +69,10 @@ public class LecturaJSON {
 		
 		File ff = new File(directorio.getCanonicalPath()+"/"+file);
 		
-		ff.createNewFile();
-		
+		if(!ff.exists()) {
+			ff.createNewFile();
+		}
+			
 		FileWriter fw = new FileWriter(ff);
 		
 		fw.write(texto);
