@@ -19,38 +19,40 @@ public class principal {
 
 		EspacioEstados prob = new EspacioEstados("/Cubos/cube.json"); 
 		
+		BorrarSolucion(prob);
+		
 		ArrayList<NodoArbol> resultado = new ArrayList<NodoArbol>();
 		resultado = new ArrayList<NodoArbol>();
 		
 		boolean poda = true;
 		
 		resultado = crearSolucion(Buscar_Solucion(prob, "estrella", 6, poda, 1));
-		imprimirSolucion(resultado, "estrella");		
+		imprimirSolucion(prob, resultado, "estrella");		
 		
 		resultado = new ArrayList<NodoArbol>();
 
 		resultado = crearSolucion(Buscar_Solucion(prob, "anchura", 6, poda, 1));
-		imprimirSolucion(resultado, "anchura");
+		imprimirSolucion(prob, resultado, "anchura");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
 	  	resultado = crearSolucion(Buscar_Solucion(prob, "profundidad_iterativa", 6, poda, 1));
-		imprimirSolucion(resultado, "profundidad_iterativa");
+		imprimirSolucion(prob, resultado, "profundidad_iterativa");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
 	  	resultado = crearSolucion(Buscar_Solucion(prob, "profundidad_acotada", 6, poda, 1));
-		imprimirSolucion(resultado, "profundidad_acotada");
+		imprimirSolucion(prob, resultado, "profundidad_acotada");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
 		resultado = crearSolucion(Buscar_Solucion(prob, "voraz", 6, poda, 1));
-		imprimirSolucion(resultado, "voraz");
+		imprimirSolucion(prob, resultado, "voraz");
 		
 		resultado = new ArrayList<NodoArbol>();
 		
 	  	resultado = crearSolucion(Buscar_Solucion(prob, "coste_uniforme", 6, poda, 1));
-		imprimirSolucion(resultado, "coste_uniforme");
+		imprimirSolucion(prob, resultado, "coste_uniforme");
 		
 		
 		long endTime = System.currentTimeMillis();
@@ -184,25 +186,25 @@ public class principal {
 		
 	}
 	
-	public static void imprimirSolucion(ArrayList<NodoArbol> solucion, String estrategia) {	
+	public static void imprimirSolucion(EspacioEstados prob, ArrayList<NodoArbol> solucion, String estrategia) {	
 		Iterator<NodoArbol> iter = solucion.iterator();
-		System.out.println();
+		String texto = "\n";
 		
 		if(estrategia.equals("anchura")) {
-			System.out.println("Breadth (Anchura)");
+			texto = texto+"Breadth (Anchura)\n";
 		}else if(estrategia.equals("profundidad_acotada")){
-			System.out.println("Depth (Profundidad acotada)");
+			texto = texto+"Depth (Profundidad acotada)\n";
 		}else if(estrategia.equals("profundidad_iterativa")) {
-			System.out.println("Depth (profundidad iterativa)");
+			texto = texto+"Depth (profundidad iterativa)\n";
 		}else if(estrategia.equals("coste_uniforme")) {
-			System.out.println("Uniform (Costo Uniforme)");
+			texto = texto+"Uniform (Costo Uniforme)\n";
 		}else if(estrategia.equals("estrella")) {
-			System.out.println("A");
+			texto = texto+"A\n";
 		}else if(estrategia.equals("voraz")) {
-			System.out.println("Greedy (Voraz)");
+			texto = texto+"Greedy (Voraz)\n";
 		}
 		
-		System.out.println("=================");
+		texto = texto+"=================\n";
 		
 		if(!solucion.isEmpty()) {
 			while(iter.hasNext()) {
@@ -212,17 +214,25 @@ public class principal {
 				DecimalFormatSymbols formatosimbolos = new DecimalFormatSymbols();
 				formatosimbolos.setDecimalSeparator('.');
 				DecimalFormat formato = new DecimalFormat("#.##", formatosimbolos);
-				
+				String t = "";
 				if(a.getPadre() == null) {
-					System.out.printf("["+a.getid()+"][None]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",v="+formato.format(a.getf())+"\n");
+					t = "["+a.getid()+"][None]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",v="+formato.format(a.getf())+"\n";
 				}else {
-					System.out.printf("["+a.getid()+"]["+a.getAccion()+"]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",v="+formato.format(a.getf())+"\n");
+					t = "["+a.getid()+"]["+a.getAccion()+"]"+md5+",c="+a.getcoste()+",p="+a.getd()+",h="+formato.format(a.geth())+",v="+formato.format(a.getf())+"\n";
 				}
+				
+				texto = texto+t;
 			}
 			
 		}else {
-			System.out.println("Solucion no encontrada");
+		
+			texto =	texto+"Solucion no encontrada";
+		
 		}
+		GuardarSolucion(prob, texto);
+		System.out.printf(texto);
+		
+		
 		
 	}
 	
@@ -386,6 +396,33 @@ public class principal {
 	}
 	
 	
+	public static void GuardarSolucion(EspacioEstados prob, String texto) {
+		try {
+			String file = "Solucion.txt";
+			String[] sp = prob.getFile().split("/");
+			String[] name = sp[sp.length-1].split("\\.");
+			file = name[0]+"_"+file;
+			LecturaJSON.escribir(file, texto);
+		} catch (FileNotFoundException e) {
+			System.out.printf("\nFallo al guardar la solucion"+e.getMessage());
+		} catch (IOException e) {
+			System.out.printf("\nFallo al guardar la solucion"+e.getMessage());
+		}
+	}
+	
+	public static void BorrarSolucion(EspacioEstados prob) {
+		String file = "Solucion.txt";
+		String[] sp = prob.getFile().split("/");
+		String[] name = sp[sp.length-1].split("\\.");
+		file = name[0]+"_"+file;
+		try {
+			LecturaJSON.borrar(file);
+		} catch (FileNotFoundException e) {
+			System.out.printf("\nFallo al borrar la solucion"+e.getMessage());
+		} catch (IOException e) {
+			System.out.printf("\nFallo al borrar la solucion"+e.getMessage());
+		}
+	}
 	
 	public static boolean EsObjetivo(NodoArbol a) {
 		
